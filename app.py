@@ -7,13 +7,20 @@ import base64
 app = Flask(__name__)
 
 
-def sin_wave(ts: np.ndarray):
-    return np.sin(2 * np.pi * 4 * ts)
+def sin_wave(ts: np.ndarray, freq: int = 1):
+    return np.sin(2 * np.pi * freq * ts)
     
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
     ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys = sin_wave(ts)
+    
+    freq: int = 1
+    try:
+        freq: int = int(request.args.get("freq", "1"))
+    except ValueError:
+        pass
+
+    ys = sin_wave(ts, freq)
     fig, ax = plt.subplots()
     ax.plot(ts, ys)
 
