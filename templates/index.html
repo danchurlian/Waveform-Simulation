@@ -8,8 +8,8 @@
     </head>
     <body>
         <h1>Test</h1>
-        {{ figure_html | safe }}
-        <form hx-post="/" name="freq" hx-target="body">
+        <img id="plot-image" />
+        <form hx-post="/image" name="freq" hx-target="#plot-image" hx-swap="outerHTML">
             <input name="freq" type="text" autofocus="true"/>
             <button type="submit">Submit</button>
         </form>
