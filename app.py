@@ -19,11 +19,19 @@ def triangle_wave(ts: np.ndarray, freq: int = 1):
     return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
 
 
+JUMP_TABLE: dict = {
+    "Sine Wave": sin_wave,
+    "Triangle Wave": triangle_wave,
+    "Sawtooth Wave": sawtooth_wave,  
+}
+
+
 @app.post("/image")
 def image():
     freq: int = int(request.form["freq"])
+    key: str = request.form.get("sig-type", "NONE") 
     ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys: np.ndarray = triangle_wave(ts, freq=freq)
+    ys: np.ndarray = JUMP_TABLE[key](ts, freq=freq)
 
     # Convert the buffer output into a base 64 string
     buffer = io.BytesIO()
