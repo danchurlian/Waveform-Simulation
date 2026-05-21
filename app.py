@@ -18,11 +18,15 @@ def sawtooth_wave(ts: np.ndarray, freq: int = 1):
 def triangle_wave(ts: np.ndarray, freq: int = 1):
     return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
 
+def square_wave(ts: np.ndarray, freq: int = 1):
+    return np.sign(np.sin(2 * np.pi * freq * ts))
+
 
 JUMP_TABLE: dict = {
     "Sine Wave": sin_wave,
     "Triangle Wave": triangle_wave,
     "Sawtooth Wave": sawtooth_wave,  
+    "Square Wave": square_wave,
 }
 
 
