@@ -12,14 +12,18 @@ def sin_wave(ts: np.ndarray, freq: int = 1):
 
 
 def sawtooth_wave(ts: np.ndarray, freq: int = 1):
-    return 2 * ((freq * ts) - np.floor(freq * ts) - 1/2)
+    return 2 * ((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2)
+
+
+def triangle_wave(ts: np.ndarray, freq: int = 1):
+    return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
 
 
 @app.post("/image")
 def image():
     freq: int = int(request.form["freq"])
     ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys: np.ndarray = sawtooth_wave(ts, freq=freq)
+    ys: np.ndarray = triangle_wave(ts, freq=freq)
 
     # Convert the buffer output into a base 64 string
     buffer = io.BytesIO()
