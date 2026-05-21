@@ -11,11 +11,15 @@ def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
 
 
+def sawtooth_wave(ts: np.ndarray, freq: int = 1):
+    return 2 * ((freq * ts) - np.floor(freq * ts) - 1/2)
+
+
 @app.post("/image")
 def image():
     freq: int = int(request.form["freq"])
     ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys: np.ndarray = sin_wave(ts, freq=freq)
+    ys: np.ndarray = sawtooth_wave(ts, freq=freq)
 
     # Convert the buffer output into a base 64 string
     buffer = io.BytesIO()
