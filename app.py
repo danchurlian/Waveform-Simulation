@@ -29,22 +29,112 @@ JUMP_TABLE: dict = {
     "Square Wave": square_wave,
 }
 
-# Assume all these formulas are nested under <mtrow></mtrow>
 WAVEFORM_EQS: dict = {
     "Sine Wave": {
         "eq_og": """
-    <mrow>
-<mi>sin</mi>
-<mo>(</mo>
-<mn>2</mn>
-<mi>&pi;</mi>
-<mi>f</mi>
-<mi>t</mi>
-<mo>)</mo>
+<mrow>
+    <mi>sin</mi>
+    <mo>(</mo>
+        <mn>2</mn>
+        <mi>&pi;</mi>
+        <mi>f</mi>
+        <mi>t</mi>
+    <mo>)</mo>
     </mrow>
-"""
-    }
+""",
+        "eq_series": """
+<mrow>
+    <mi>sin</mi>
+    <mo>(</mo>
+        <mn>2</mn>
+        <mi>&pi;</mi>
+        <mi>f</mi>
+        <mi>t</mi>
+    <mo>)</mo>
+    </mrow>
+""",
+    },
 
+    "Sawtooth Wave": {
+        "eq_og": """
+<mrow>
+    <mn>2</mn>
+    <mo>(</mo>
+        <mo>(</mo>
+        <mi>f</mi>
+        <mi>t</mi>
+        <mo>)</mo>
+
+        <mo>-</mo>
+
+        <mi>floor</mi>
+        <mo>(</mo>
+        <mi>f</mi>
+        <mi>t</mi>
+        <mo>)</mo>
+
+        
+        <mo>-</mo>
+
+        <mfrac>
+            <mn>1</mn>
+            <mn>2</mn>
+        </mfrac>
+    <mo>)</mo>
+</mrow>
+""",
+        "eq_series": """
+""",
+    },
+
+    "Triangle Wave": {
+        "eq_og": """
+<mn>4</mn>
+<mo>(</mo>
+    <mi>abs</mi>
+    <mo>(</mo>
+        <mi>f</mi>
+        <mi>t</mi>
+
+        <mo>-</mo>
+
+        <mi>floor</mi>
+        <mo>(</mo>
+            <mi>f</mi>
+            <mi>t</mi>
+        <mo>)</mo>
+
+        <mo>-</mo>
+
+        <mfrac>
+            <mn>1</mn>
+            <mn>2</mn>
+        </mfrac>
+
+    <mo>)</mo>
+    <mo>-</mo>
+    <mfrac>
+        <mn>1</mn>
+        <mn>4</mn>
+    </mfrac>
+<mo>)</mo>
+""",
+    },
+    "Square Wave": {
+        "eq_og": """
+<mrow>
+    <mi>sign</mi>
+    <mo>(</mo>
+        <mi>sin</mi>
+        <mo>(</mo>
+            <mn>2</mn>
+            <mi>&pi;</mi>
+            <mi>f</mi>
+            <mi>t</mi>
+        <mo>)</mo>
+    <mo>)</mo>
+""",
+    },
 }
 
 
