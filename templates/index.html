@@ -14,8 +14,10 @@
                 <h1>Waveform Simulation</h1>
             </header>
             <div class="centered-container">
-                <img id="plot-image" />
-                <form hx-post="/image" name="freq" hx-target="#plot-image" hx-swap="outerHTML">
+                <div class="centered-container" id="graph-data">
+                    <img id="plot-image" />
+                </div>
+                <form hx-post="/image" name="freq" hx-target="#graph-data" hx-swap="innerHTML">
                     <select name="sig-type">
                         <option>Sine Wave</option>
                         <option>Sawtooth Wave</option>

@@ -30,12 +30,10 @@ JUMP_TABLE: dict = {
 }
 
 
-@app.post("/image")
-def image():
-    freq: int = int(request.form["freq"])
-    key: str = request.form.get("sig-type", "NONE") 
+def image(freq: int, sigtype: str) -> str:
+    assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
     ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys: np.ndarray = JUMP_TABLE[key](ts, freq=freq)
+    ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
 
     # Convert the buffer output into a base 64 string
     buffer = io.BytesIO()
@@ -46,6 +44,17 @@ def image():
     data = base64.b64encode(buffer.getbuffer()).decode("ascii")
 
     return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
+
+
+@app.post("/image")
+def new_image_main():
+    freq: int = int(request.form["freq"])
+    sigtype: str = request.form.get("sig-type", "NONE") 
+    img_tag: str = image(freq=freq, sigtype=sigtype) 
+    # math formulas, using MathML
+    eq_original: str = "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>"
+    eq_series: str = "<mrow><mi>sin(2pifx)</mi></mrow>"
+    return f"{img_tag}\n<math>{eq_original}\n{eq_series}</math>"
     
     
 @app.get("/")
