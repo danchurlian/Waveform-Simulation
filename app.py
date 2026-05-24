@@ -29,6 +29,24 @@ JUMP_TABLE: dict = {
     "Square Wave": square_wave,
 }
 
+# Assume all these formulas are nested under <mtrow></mtrow>
+WAVEFORM_EQS: dict = {
+    "Sine Wave": {
+        "eq_og": """
+    <mrow>
+<mi>sin</mi>
+<mo>(</mo>
+<mn>2</mn>
+<mi>&pi;</mi>
+<mi>f</mi>
+<mi>t</mi>
+<mo>)</mo>
+    </mrow>
+"""
+    }
+
+}
+
 
 def image(freq: int, sigtype: str) -> str:
     assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
@@ -51,10 +69,25 @@ def new_image_main():
     freq: int = int(request.form["freq"])
     sigtype: str = request.form.get("sig-type", "NONE") 
     img_tag: str = image(freq=freq, sigtype=sigtype) 
+
     # math formulas, using MathML
-    eq_original: str = "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>"
-    eq_series: str = "<mrow><mi>sin(2pifx)</mi></mrow>"
-    return f"{img_tag}\n<math>{eq_original}\n{eq_series}</math>"
+    eq_original: str = "No object" 
+    eq_series: str = "No object" 
+
+    if sigtype in WAVEFORM_EQS:
+        eq_original = WAVEFORM_EQS[sigtype].get("eq_og", "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>")
+
+        eq_series = WAVEFORM_EQS[sigtype].get("eq_series", "<mrow><mi>sin(2pifx)</mi></mrow>")
+        if "eq_series" in WAVEFORM_EQS[sigtype]:
+            pass
+
+    return f"""{img_tag}
+<math>
+    <mtable>
+        <mtr>{eq_original}</mtr>
+        <mtr>{eq_series}</mtr>
+    </mtable>
+</math>"""
     
     
 @app.get("/")
