@@ -82,13 +82,14 @@ def new_image_main():
             pass
 
     return f"""{img_tag}
-<math>
-    <mtable>
-        <mtr>{eq_original}</mtr>
-        <mtr>{eq_series}</mtr>
-    </mtable>
-</math>"""
-    
+<div> 
+    <span>Original equation:</span>
+    <math>{eq_original}</math>
+</div>
+<div> 
+    <span>Fourier expansion:</span>
+    <math>{eq_series}</math>
+</div>""" 
     
 @app.get("/")
 def index():
