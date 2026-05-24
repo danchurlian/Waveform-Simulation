@@ -5,19 +5,27 @@
         <title>Waveform website</title>
         <!-- HTMX script right here -->
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+        
+        <link href="{{ url_for('static', filename='style.css')}}" rel="stylesheet" />
     </head>
     <body>
-        <h1>Waveform Simulation</h1>
-        <img id="plot-image" />
-        <form hx-post="/image" name="freq" hx-target="#plot-image" hx-swap="outerHTML">
-            <select name="sig-type">
-                <option>Sine Wave</option>
-                <option>Sawtooth Wave</option>
-                <option>Triangle Wave</option>
-                <option>Square Wave</option>
-            </select>
-            <input name="freq" type="text" autofocus="true" autocomplete="off"/>
-            <button type="submit">Submit</button>
-        </form>
+        <main>
+            <header class="centered-container">
+                <h1>Waveform Simulation</h1>
+            </header>
+            <div class="centered-container">
+                <img id="plot-image" />
+                <form hx-post="/image" name="freq" hx-target="#plot-image" hx-swap="outerHTML">
+                    <select name="sig-type">
+                        <option>Sine Wave</option>
+                        <option>Sawtooth Wave</option>
+                        <option>Triangle Wave</option>
+                        <option>Square Wave</option>
+                    </select>
+                    <input name="freq" type="text" autofocus="true" autocomplete="off"/>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </main>
     </body>
 </html>
