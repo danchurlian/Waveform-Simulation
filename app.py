@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
+import latex2mathml.converter
 
 app = Flask(__name__)
 
@@ -31,28 +32,8 @@ JUMP_TABLE: dict = {
 
 WAVEFORM_EQS: dict = {
     "Sine Wave": {
-        "eq_og": """
-<mrow>
-    <mi>sin</mi>
-    <mo>(</mo>
-        <mn>2</mn>
-        <mi>&pi;</mi>
-        <mi>f</mi>
-        <mi>t</mi>
-    <mo>)</mo>
-    </mrow>
-""",
-        "eq_series": """
-<mrow>
-    <mi>sin</mi>
-    <mo>(</mo>
-        <mn>2</mn>
-        <mi>&pi;</mi>
-        <mi>f</mi>
-        <mi>t</mi>
-    <mo>)</mo>
-    </mrow>
-""",
+        "eq_og": "\\sin({2 \\pi f t})",
+        "eq_series": "\\sin({2 \\pi f t})",
     },
 
     "Sawtooth Wave": {
@@ -168,17 +149,20 @@ def new_image_main():
         eq_original = WAVEFORM_EQS[sigtype].get("eq_og", "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>")
 
         eq_series = WAVEFORM_EQS[sigtype].get("eq_series", "<mrow><mi>sin(2pifx)</mi></mrow>")
-        if "eq_series" in WAVEFORM_EQS[sigtype]:
-            pass
+
+        eq_original = latex2mathml.converter.convert(eq_original)
+        eq_series = latex2mathml.converter.convert(eq_series)
+        print(eq_original)
+        print(eq_series)
 
     return f"""{img_tag}
 <div> 
     <span>Original equation:</span>
-    <math>{eq_original}</math>
+    {eq_original}
 </div>
 <div> 
     <span>Fourier expansion:</span>
-    <math>{eq_series}</math>
+    {eq_series}
 </div>""" 
     
 @app.get("/")
