@@ -42,37 +42,8 @@ WAVEFORM_EQS: dict = {
     },
 
     "Triangle Wave": {
-        "eq_og": """
-<mn>4</mn>
-<mo>(</mo>
-    <mi>abs</mi>
-    <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-
-        <mo>-</mo>
-
-        <mi>floor</mi>
-        <mo>(</mo>
-            <mi>f</mi>
-            <mi>t</mi>
-        <mo>)</mo>
-
-        <mo>-</mo>
-
-        <mfrac>
-            <mn>1</mn>
-            <mn>2</mn>
-        </mfrac>
-
-    <mo>)</mo>
-    <mo>-</mo>
-    <mfrac>
-        <mn>1</mn>
-        <mn>4</mn>
-    </mfrac>
-<mo>)</mo>
-""",
+        "eq_og": "4(|ft - \\lfloor ft \\rfloor - \\frac{1}{2}| - \\frac{1}{4})",
+        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{9}sin({2\\pi 3ft}) + \\frac{1}{25}sin({2\\pi 5ft}) + ...",
     },
     "Square Wave": {
         "eq_og": """
