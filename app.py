@@ -46,19 +46,8 @@ WAVEFORM_EQS: dict = {
         "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{9}sin({2\\pi 3ft}) + \\frac{1}{25}sin({2\\pi 5ft}) + ...",
     },
     "Square Wave": {
-        "eq_og": """
-<mrow>
-    <mi>sign</mi>
-    <mo>(</mo>
-        <mi>sin</mi>
-        <mo>(</mo>
-            <mn>2</mn>
-            <mi>&pi;</mi>
-            <mi>f</mi>
-            <mi>t</mi>
-        <mo>)</mo>
-    <mo>)</mo>
-""",
+        "eq_og": "\\text{sgn}({\\sin({2\\pi ft})})",
+        "eq_series": "\\sin(2\\pi ft) + \\frac{1}{3}sin(2\\pi 3ft) + \\frac{1}{5}\\sin(2\\pi 5ft) + ..."
     },
 }
 
