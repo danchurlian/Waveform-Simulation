@@ -78,15 +78,12 @@ def new_image_main():
     eq_original: str = "No object" 
     eq_series: str = "No object" 
 
-    if sigtype in WAVEFORM_EQS:
-        eq_original = WAVEFORM_EQS[sigtype].get("eq_og", "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>")
+    assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
+    assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
+    assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
 
-        eq_series = WAVEFORM_EQS[sigtype].get("eq_series", "<mrow><mi>sin(2pifx)</mi></mrow>")
-
-        eq_original = latex2mathml.converter.convert(eq_original)
-        eq_series = latex2mathml.converter.convert(eq_series)
-        print(eq_original)
-        print(eq_series)
+    eq_original = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_og"])
+    eq_series = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_series"])
 
     return f"""{img_tag}
 <div> 
