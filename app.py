@@ -37,35 +37,8 @@ WAVEFORM_EQS: dict = {
     },
 
     "Sawtooth Wave": {
-        "eq_og": """
-<mrow>
-    <mn>2</mn>
-    <mo>(</mo>
-        <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-        <mo>)</mo>
-
-        <mo>-</mo>
-
-        <mi>floor</mi>
-        <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-        <mo>)</mo>
-
-        
-        <mo>-</mo>
-
-        <mfrac>
-            <mn>1</mn>
-            <mn>2</mn>
-        </mfrac>
-    <mo>)</mo>
-</mrow>
-""",
-        "eq_series": """
-""",
+        "eq_og": "2(ft - \\lfloor ft \\rfloor - \\frac{1}{2})",
+        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{2}\\sin({2\\pi 2ft}) + \\frac{1}{3}\\sin({2\\pi 3ft}) + ...",
     },
 
     "Triangle Wave": {
