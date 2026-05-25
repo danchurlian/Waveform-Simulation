@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
+import latex2mathml.converter
 
 app = Flask(__name__)
 
@@ -31,109 +32,22 @@ JUMP_TABLE: dict = {
 
 WAVEFORM_EQS: dict = {
     "Sine Wave": {
-        "eq_og": """
-<mrow>
-    <mi>sin</mi>
-    <mo>(</mo>
-        <mn>2</mn>
-        <mi>&pi;</mi>
-        <mi>f</mi>
-        <mi>t</mi>
-    <mo>)</mo>
-    </mrow>
-""",
-        "eq_series": """
-<mrow>
-    <mi>sin</mi>
-    <mo>(</mo>
-        <mn>2</mn>
-        <mi>&pi;</mi>
-        <mi>f</mi>
-        <mi>t</mi>
-    <mo>)</mo>
-    </mrow>
-""",
+        "eq_og": "\\sin({2 \\pi f t})",
+        "eq_series": "\\sin({2 \\pi f t})",
     },
 
     "Sawtooth Wave": {
-        "eq_og": """
-<mrow>
-    <mn>2</mn>
-    <mo>(</mo>
-        <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-        <mo>)</mo>
-
-        <mo>-</mo>
-
-        <mi>floor</mi>
-        <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-        <mo>)</mo>
-
-        
-        <mo>-</mo>
-
-        <mfrac>
-            <mn>1</mn>
-            <mn>2</mn>
-        </mfrac>
-    <mo>)</mo>
-</mrow>
-""",
-        "eq_series": """
-""",
+        "eq_og": "2(ft - \\lfloor ft \\rfloor - \\frac{1}{2})",
+        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{2}\\sin({2\\pi 2ft}) + \\frac{1}{3}\\sin({2\\pi 3ft}) + ...",
     },
 
     "Triangle Wave": {
-        "eq_og": """
-<mn>4</mn>
-<mo>(</mo>
-    <mi>abs</mi>
-    <mo>(</mo>
-        <mi>f</mi>
-        <mi>t</mi>
-
-        <mo>-</mo>
-
-        <mi>floor</mi>
-        <mo>(</mo>
-            <mi>f</mi>
-            <mi>t</mi>
-        <mo>)</mo>
-
-        <mo>-</mo>
-
-        <mfrac>
-            <mn>1</mn>
-            <mn>2</mn>
-        </mfrac>
-
-    <mo>)</mo>
-    <mo>-</mo>
-    <mfrac>
-        <mn>1</mn>
-        <mn>4</mn>
-    </mfrac>
-<mo>)</mo>
-""",
+        "eq_og": "4(|ft - \\lfloor ft \\rfloor - \\frac{1}{2}| - \\frac{1}{4})",
+        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{9}sin({2\\pi 3ft}) + \\frac{1}{25}sin({2\\pi 5ft}) + ...",
     },
     "Square Wave": {
-        "eq_og": """
-<mrow>
-    <mi>sign</mi>
-    <mo>(</mo>
-        <mi>sin</mi>
-        <mo>(</mo>
-            <mn>2</mn>
-            <mi>&pi;</mi>
-            <mi>f</mi>
-            <mi>t</mi>
-        <mo>)</mo>
-    <mo>)</mo>
-""",
+        "eq_og": "\\text{sgn}({\\sin({2\\pi ft})})",
+        "eq_series": "\\sin(2\\pi ft) + \\frac{1}{3}sin(2\\pi 3ft) + \\frac{1}{5}\\sin(2\\pi 5ft) + ..."
     },
 }
 
@@ -164,21 +78,21 @@ def new_image_main():
     eq_original: str = "No object" 
     eq_series: str = "No object" 
 
-    if sigtype in WAVEFORM_EQS:
-        eq_original = WAVEFORM_EQS[sigtype].get("eq_og", "<mrow><mn>2</mn><mi>x</mi> + <mn>5</mn></mrow>")
+    assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
+    assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
+    assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
 
-        eq_series = WAVEFORM_EQS[sigtype].get("eq_series", "<mrow><mi>sin(2pifx)</mi></mrow>")
-        if "eq_series" in WAVEFORM_EQS[sigtype]:
-            pass
+    eq_original = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_og"])
+    eq_series = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_series"])
 
     return f"""{img_tag}
 <div> 
     <span>Original equation:</span>
-    <math>{eq_original}</math>
+    {eq_original}
 </div>
 <div> 
     <span>Fourier expansion:</span>
-    <math>{eq_series}</math>
+    {eq_series}
 </div>""" 
     
 @app.get("/")
