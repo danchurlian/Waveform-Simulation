@@ -17,7 +17,11 @@
                 <div class="centered-container" id="graph-data">
                     <img id="plot-image" />
                 </div>
-                <form hx-post="/image" hx-target="#graph-data" hx-swap="innerHTML">
+                <form   hx-post="/image" 
+                        hx-target="#graph-data" 
+                        hx-swap="innerHTML"
+                        hx-on::before-request="document.querySelector('input').value = '';">
+
                     <select name="sig-type">
                         <option>Sine Wave</option>
                         <option>Sawtooth Wave</option>
@@ -29,5 +33,6 @@
                 </form>
             </div>
         </main>
+        <script src="{{ url_for('static', filename='/js/index.js') }}"></script>
     </body>
 </html>
