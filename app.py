@@ -37,17 +37,17 @@ WAVEFORM_EQS: dict = {
     },
 
     "Sawtooth Wave": {
-        "eq_og": "2(ft - \\lfloor ft \\rfloor - \\frac{1}{2})",
-        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{2}\\sin({2\\pi 2ft}) + \\frac{1}{3}\\sin({2\\pi 3ft}) + ...",
+        "eq_og": "2( f t - \\lfloor f t \\rfloor - \\frac{1}{2})",
+        "eq_series": "\\sin({2\\pi f t}) - \\frac{1}{2}\\sin({2\\pi 2 f t}) + \\frac{1}{3}\\sin({2\\pi 3 f t}) + ...",
     },
 
     "Triangle Wave": {
-        "eq_og": "4(|ft - \\lfloor ft \\rfloor - \\frac{1}{2}| - \\frac{1}{4})",
-        "eq_series": "\\sin({2\\pi ft}) - \\frac{1}{9}sin({2\\pi 3ft}) + \\frac{1}{25}sin({2\\pi 5ft}) + ...",
+        "eq_og": "4(| f t - \\lfloor f t \\rfloor - \\frac{1}{2}| - \\frac{1}{4})",
+        "eq_series": "\\sin({2\\pi f t}) - \\frac{1}{9}sin({2\\pi 3 f t}) + \\frac{1}{25}sin({2\\pi 5 f t}) + ...",
     },
     "Square Wave": {
-        "eq_og": "\\text{sgn}({\\sin({2\\pi ft})})",
-        "eq_series": "\\sin(2\\pi ft) + \\frac{1}{3}sin(2\\pi 3ft) + \\frac{1}{5}\\sin(2\\pi 5ft) + ..."
+        "eq_og": "\\text{sgn}({\\sin({2\\pi f t})})",
+        "eq_series": "\\sin(2\\pi f t) + \\frac{1}{3}sin(2\\pi 3 f t) + \\frac{1}{5}\\sin(2\\pi 5 f t) + ..."
     },
 }
 
@@ -82,8 +82,11 @@ def new_image_main():
     assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
     assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
 
-    eq_original = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_og"])
-    eq_series = latex2mathml.converter.convert(WAVEFORM_EQS[sigtype]["eq_series"])
+    eq_original = WAVEFORM_EQS[sigtype]["eq_og"].replace(" f ", f"({freq})")
+    eq_series = WAVEFORM_EQS[sigtype]["eq_series"].replace(" f ", f"({freq})")
+
+    eq_original = latex2mathml.converter.convert(eq_original)
+    eq_series = latex2mathml.converter.convert(eq_series)
 
     return f"""{img_tag}
 <div> 
