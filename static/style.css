@@ -1,17 +1,31 @@
+:root {
+    --header-color: rgb(85, 96, 255);
+}
+
 body {
     margin: 0;
     font-family: Arial, sans-serif
 }
 
 header {
-    background-color: rgb(85, 96, 255);
+    background-color: var(--header-color);
     color: white;
+}
+
+footer {
+    background-color: var(--header-color);
+    color: white;
+    height: 30px;
 }
 
 .centered-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.centered-vertical-container {
+    justify-content: center;
 }
 
 .left-right-container {
@@ -41,7 +55,6 @@ header {
 #graph-data {
     flex-basis: 600px;
 }
-
 
 eq-label {
     font-weight: bold;
