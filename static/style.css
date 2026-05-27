@@ -29,14 +29,19 @@ header {
     overflow: hidden;
 }
 
+#left-side {
+    padding: 1rem;
+}
+
+#equation-list {
+    padding-left: 1rem;
+    margin-bottom: 0;
+}
 
 #graph-data {
     flex-basis: 600px;
 }
 
-#equation-list {
-    padding-left: 1rem;
-}
 
 eq-label {
     font-weight: bold;
