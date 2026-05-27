@@ -14,6 +14,21 @@ header {
     align-items: center;
 }
 
+.left-right-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 600px;
+}
+
+#graph-data {
+    flex-basis: 600px;
+}
+
+#equation-list {
+    padding-left: 1rem;
+}
 
 eq-label {
     font-weight: bold;
