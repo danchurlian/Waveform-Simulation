@@ -114,19 +114,19 @@ def new_image_main() -> str:
 
         response = f"""{img_tag}
 <div>
-    <span>Original equation formula:</span> 
+    <eq-label>Original equation formula:</eq-label> 
     {eq_og_template}
 </div>
 <div> 
-    <span>Original equation:</span>
+    <eq-label>Original equation:</eq-label>
     {eq_original}
 </div>
 <div>
-    <span>Fourier expansion formula:</span>
+    <eq-label>Fourier expansion formula:</eq-label>
     {eq_series_template}
 </div>
 <div> 
-    <span>Fourier expansion:</span>
+    <eq-label>Fourier expansion:</eq-label>
     {eq_series}
 </div>""" 
 

@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    font-family: Arial, sans-serif
 }
 
 header {
@@ -11,4 +12,9 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+
+eq-label {
+    font-weight: bold;
 }
