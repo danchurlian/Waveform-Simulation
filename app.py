@@ -1,9 +1,13 @@
 from flask import Flask, render_template, request
-import numpy as np
-import matplotlib.pyplot as plt
 import io
 import base64
 import latex2mathml.converter
+
+import numpy as np
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
@@ -18,6 +22,7 @@ def sawtooth_wave(ts: np.ndarray, freq: int = 1):
 
 def triangle_wave(ts: np.ndarray, freq: int = 1):
     return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
+
 
 def square_wave(ts: np.ndarray, freq: int = 1):
     return np.sign(np.sin(2 * np.pi * freq * ts))
