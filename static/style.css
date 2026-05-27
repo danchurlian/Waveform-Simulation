@@ -2,6 +2,10 @@ body {
     margin: 0;
 }
 
+header {
+    background-color: rgb(85, 96, 255);
+    color: white;
+}
 
 .centered-container {
     display: flex;
