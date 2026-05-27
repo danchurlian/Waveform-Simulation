@@ -70,33 +70,44 @@ def image(freq: int, sigtype: str) -> str:
 
 @app.post("/image")
 def new_image_main() -> str:
-    freq: int = int(request.form["freq"])
-    sigtype: str = request.form.get("sig-type", "NONE") 
-    img_tag: str = image(freq=freq, sigtype=sigtype) 
+    freq_response: str = request.form["freq"]
+    # if int, cast it, else if a decimal, round it down and cast to int, else error message
+    response: str = ""
 
-    # math formulas, using MathML
-    eq_original: str = "No object" 
-    eq_series: str = "No object" 
+    freq: int = None
+    try:
+        freq = int(float(freq_response))
+    except ValueError:
+        response = "<div>Frequency must be a number!</div>"
 
-    assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
-    assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
-    assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
-    
-    # assign variables the strings
-    eq_og_template: str = WAVEFORM_EQS[sigtype]["eq_og"]
-    eq_series_template: str = WAVEFORM_EQS[sigtype]["eq_series"]
+    if freq is not None:
+        sigtype: str = request.form.get("sig-type", "NONE") 
+        img_tag: str = image(freq=freq, sigtype=sigtype) 
 
-    eq_original = eq_og_template.replace(" f ", f"({freq})")
-    eq_series = eq_series_template.replace(" f ", f"({freq})")
 
-    # convert each expression to MathML
-    eq_og_template = latex2mathml.converter.convert(eq_og_template)
-    eq_series_template = latex2mathml.converter.convert(eq_series_template)
+        # math formulas, using MathML
+        eq_original: str = "No object" 
+        eq_series: str = "No object" 
 
-    eq_original = latex2mathml.converter.convert(eq_original)
-    eq_series = latex2mathml.converter.convert(eq_series)
+        assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
+        assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
+        assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
+        
+        # assign variables the strings
+        eq_og_template: str = WAVEFORM_EQS[sigtype]["eq_og"]
+        eq_series_template: str = WAVEFORM_EQS[sigtype]["eq_series"]
 
-    return f"""{img_tag}
+        eq_original = eq_og_template.replace(" f ", f"({freq})")
+        eq_series = eq_series_template.replace(" f ", f"({freq})")
+
+        # convert each expression to MathML
+        eq_og_template = latex2mathml.converter.convert(eq_og_template)
+        eq_series_template = latex2mathml.converter.convert(eq_series_template)
+
+        eq_original = latex2mathml.converter.convert(eq_original)
+        eq_series = latex2mathml.converter.convert(eq_series)
+
+        response = f"""{img_tag}
 <div>
     <span>Original equation formula:</span> 
     {eq_og_template}
@@ -113,6 +124,8 @@ def new_image_main() -> str:
     <span>Fourier expansion:</span>
     {eq_series}
 </div>""" 
+
+    return response
     
 @app.get("/")
 def index():
