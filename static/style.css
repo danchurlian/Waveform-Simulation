@@ -2,6 +2,7 @@
     --header-color: rgb(85, 96, 255);
 }
 
+
 body {
     margin: 0;
     font-family: Arial, sans-serif
@@ -61,6 +62,27 @@ footer {
 #graph-data {
     flex-basis: 600px;
 }
+
+form input {
+    height: 2rem;
+    font-size: 1.5rem;
+    font-weight: lighter;
+}
+
+form button {
+    background-color: var(--header-color);
+    color: white;    
+    border: 0;
+    height: 2rem;
+
+    cursor: pointer;
+}
+
+form select {
+    height: 2rem;
+}
+
+form button
 
 eq-label {
     font-weight: bold;
