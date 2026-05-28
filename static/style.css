@@ -63,6 +63,14 @@ footer {
     flex-basis: 600px;
 }
 
+form {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
+}
+
 form input {
     height: 2rem;
     font-size: 1.5rem;
