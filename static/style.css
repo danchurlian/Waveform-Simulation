@@ -15,7 +15,13 @@ header {
 footer {
     background-color: var(--header-color);
     color: white;
+
+    justify-content: center;
+    width: 100vw;
     height: 30px;
+
+    position: absolute;
+    bottom: 0;
 }
 
 .centered-container {
