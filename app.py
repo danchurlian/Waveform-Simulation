@@ -77,7 +77,7 @@ def image(freq: int, sigtype: str) -> str:
 def new_image_main() -> str:
     freq_response: str = request.form["freq"]
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    response: str = ""
+    response: str = "<div>Frequency must be less than 6 digits!</div>"
 
     freq: int = None
     try:
@@ -85,7 +85,7 @@ def new_image_main() -> str:
     except ValueError:
         response = "<div>Frequency must be a number!</div>"
 
-    if freq is not None:
+    if freq is not None and abs(freq) < 100000:
         sigtype: str = request.form.get("sig-type", "NONE") 
         img_tag: str = image(freq=freq, sigtype=sigtype) 
 
