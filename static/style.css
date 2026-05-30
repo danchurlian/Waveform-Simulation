@@ -55,8 +55,7 @@ footer {
 }
 
 #equation-list {
-    padding-left: 1rem;
-    margin-bottom: 0;
+    margin: 0;
 }
 
 #graph-data {
