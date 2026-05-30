@@ -113,22 +113,25 @@ def new_image_main() -> str:
         eq_series = latex2mathml.converter.convert(eq_series)
 
         response = f"""{img_tag}
-<div>
-    <span>Original equation formula:</span> 
-    {eq_og_template}
-</div>
-<div> 
-    <span>Original equation:</span>
-    {eq_original}
-</div>
-<div>
-    <span>Fourier expansion formula:</span>
-    {eq_series_template}
-</div>
-<div> 
-    <span>Fourier expansion:</span>
-    {eq_series}
-</div>""" 
+<ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
+    <li>
+        <eq-label>Original equation formula:</eq-label> 
+        {eq_og_template}
+    </li>
+    <li> 
+        <eq-label>Original equation:</eq-label>
+        {eq_original}
+    </li>
+    <li>
+        <eq-label>Fourier expansion formula:</eq-label>
+        {eq_series_template}
+    </li>
+    <li> 
+        <eq-label>Fourier expansion:</eq-label>
+        {eq_series}
+    </li>
+</ul>
+""" 
 
     return response
     
