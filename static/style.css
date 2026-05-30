@@ -44,7 +44,7 @@ footer {
 }
 
 
-.left-right-container div {
+.left-right-container > div {
     border: 2px solid rgb(49, 53, 126);
     border-radius: 8px;
     overflow: hidden;
