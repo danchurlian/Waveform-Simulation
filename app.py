@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-
+SAMPLING_RATE: int = 11025
 
 def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
@@ -56,6 +56,26 @@ WAVEFORM_EQS: dict = {
     },
 }
 
+def get_spectrum_img(freq: int, sigtype: str) -> str:
+    assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
+    ts: np.ndarray = np.linspace(0, 1, SAMPLING_RATE, endpoint=False)
+    ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
+
+    # compute the RFFT
+    fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
+    hs: np.ndarray = np.abs(np.fft.rfft(ys))
+
+    # use matplotlib and render it to an image
+    fig, ax = plt.subplots()
+    ax.plot(fs, hs)
+
+    # use IO
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    data = base64.b64encode(buffer.getbuffer()).decode("ascii")
+
+    # return the image tag HTML element
+    return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
 
 def image(freq: int, sigtype: str) -> str:
     assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
@@ -87,7 +107,7 @@ def new_image_main() -> str:
 
     if freq is not None and abs(freq) < 100000:
         sigtype: str = request.form.get("sig-type", "NONE") 
-        img_tag: str = image(freq=freq, sigtype=sigtype) 
+        img_tag: str = get_spectrum_img(freq=freq, sigtype=sigtype) 
 
 
         # math formulas, using MathML
