@@ -63,14 +63,18 @@ def image(ts: np.ndarray, ys: np.ndarray):
     # Make 2 subplots, top is the signal plot, bottom is the spectrum plot
     fig, axes = plt.subplots(2)
     axes[0].plot(ts, ys)
+    axes[0].set_title("Signal")
     axes[1].plot(fs, hs)
+    axes[1].set_title("Spectrum")
+
+    fig.tight_layout()
 
     buffer = io.BytesIO()
     # Save IO and into base64
     fig.savefig(buffer, format='png')
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
-    return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
+    return f"<img id='plot-image' style='padding: 1rem' src='data:image/png;base64,{data}'/>"
 
 
 @app.post("/image")

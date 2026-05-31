@@ -58,10 +58,6 @@ footer {
     margin: 0;
 }
 
-#graph-data {
-    flex-basis: 600px;
-}
-
 form {
     display: flex;
     flex-direction: row;
