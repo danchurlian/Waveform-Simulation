@@ -56,11 +56,7 @@ WAVEFORM_EQS: dict = {
     },
 }
 
-def get_spectrum_img(freq: int, sigtype: str) -> str:
-    assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
-    ts: np.ndarray = np.linspace(0, 1, SAMPLING_RATE, endpoint=False)
-    ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
-
+def get_spectrum_img(ys: np.ndarray) -> str:
     # compute the RFFT
     fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
     hs: np.ndarray = np.abs(np.fft.rfft(ys))
@@ -77,11 +73,7 @@ def get_spectrum_img(freq: int, sigtype: str) -> str:
     # return the image tag HTML element
     return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
 
-def image(freq: int, sigtype: str) -> str:
-    assert sigtype in JUMP_TABLE, f"The signal {sigtype} was not found in the table!"
-    ts: np.ndarray = np.linspace(0, 2, 11025)
-    ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
-
+def get_signal_img(ts: np.ndarray, ys: np.ndarray) -> str:
     # Convert the buffer output into a base 64 string
     buffer = io.BytesIO()
 
@@ -107,8 +99,12 @@ def new_image_main() -> str:
 
     if freq is not None and abs(freq) < 100000:
         sigtype: str = request.form.get("sig-type", "NONE") 
-        img_tag: str = get_spectrum_img(freq=freq, sigtype=sigtype) 
 
+        # Calculate and sample the signal, generate plots
+        ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+        ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
+        sig_plot_imgtag: str = get_signal_img(ts, ys) 
+        spec_plot_imgtag: str = get_spectrum_img(ys) 
 
         # math formulas, using MathML
         eq_original: str = "No object" 
@@ -118,6 +114,7 @@ def new_image_main() -> str:
         assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
         assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
         
+        # Format the equations
         # assign variables the strings
         eq_og_template: str = WAVEFORM_EQS[sigtype]["eq_og"]
         eq_series_template: str = WAVEFORM_EQS[sigtype]["eq_series"]
@@ -132,7 +129,8 @@ def new_image_main() -> str:
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
 
-        response = f"""{img_tag}
+        response = f"""{sig_plot_imgtag}
+{spec_plot_imgtag}
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label>Original equation formula:</eq-label> 
