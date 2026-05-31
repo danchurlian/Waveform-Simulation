@@ -56,32 +56,20 @@ WAVEFORM_EQS: dict = {
     },
 }
 
-def get_spectrum_img(ys: np.ndarray) -> str:
-    # compute the RFFT
+
+def image(ts: np.ndarray, ys: np.ndarray):
     fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
     hs: np.ndarray = np.abs(np.fft.rfft(ys))
+    # Make 2 subplots, top is the signal plot, bottom is the spectrum plot
+    fig, axes = plt.subplots(2)
+    axes[0].plot(ts, ys)
+    axes[1].plot(fs, hs)
 
-    # use matplotlib and render it to an image
-    fig, ax = plt.subplots()
-    ax.plot(fs, hs)
-
-    # use IO
     buffer = io.BytesIO()
+    # Save IO and into base64
     fig.savefig(buffer, format='png')
-    data = base64.b64encode(buffer.getbuffer()).decode("ascii")
-
-    # return the image tag HTML element
-    return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
-
-def get_signal_img(ts: np.ndarray, ys: np.ndarray) -> str:
-    # Convert the buffer output into a base 64 string
-    buffer = io.BytesIO()
-
-    fig, ax = plt.subplots()
-    ax.plot(ts, ys)
-    fig.savefig(buffer, format='png')
-    data = base64.b64encode(buffer.getbuffer()).decode("ascii")
-
+    # Then return the data as an image tag
+    data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
     return f"<img id='plot-image' src='data:image/png;base64,{data}'/>"
 
 
@@ -103,8 +91,7 @@ def new_image_main() -> str:
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
         ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
-        sig_plot_imgtag: str = get_signal_img(ts, ys) 
-        spec_plot_imgtag: str = get_spectrum_img(ys) 
+        imgtag: str = image(ts, ys)
 
         # math formulas, using MathML
         eq_original: str = "No object" 
@@ -129,8 +116,7 @@ def new_image_main() -> str:
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
 
-        response = f"""{sig_plot_imgtag}
-{spec_plot_imgtag}
+        response = f"""{imgtag}
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label>Original equation formula:</eq-label> 
