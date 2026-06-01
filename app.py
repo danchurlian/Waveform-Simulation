@@ -79,7 +79,7 @@ def image(ts: np.ndarray, ys: np.ndarray):
 
 @app.post("/image")
 def new_image_main() -> str:
-    freq_response: str = request.form["freq"]
+    freq_response: str = request.form["freq-slider"]
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
     response: str = "<div>Frequency must be less than 6 digits!</div>"
 

@@ -27,6 +27,12 @@
                             <option>Square Wave</option>
                         </select>
                         <input name="freq" type="text" autofocus="true" autocomplete="off" placeholder="Frequency (Hz)"/>
+                        <input name="freq-slider" 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            step="1"
+                            hx-on:change="document.querySelector('form').requestSubmit()"/>
                         <button type="submit">Submit</button>
                     </form>
                     <ul id="equation-list">
