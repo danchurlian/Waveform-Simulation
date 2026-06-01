@@ -30,9 +30,9 @@
                         <input name="freq-slider" 
                             type="range" 
                             min="0" 
-                            max="100" 
-                            step="1"
-                            hx-on:change="document.querySelector('form').requestSubmit()"/>
+                            max="1000" 
+                            step="10"
+                            hx-on:input="document.querySelector('form').requestSubmit()"/>
                         <button type="submit">Submit</button>
                     </form>
                     <ul id="equation-list">
