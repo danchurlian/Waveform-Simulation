@@ -80,17 +80,20 @@ def image(ts: np.ndarray, ys: np.ndarray):
 
 @app.post("/image")
 def new_image_main() -> str:
+    freq_text_response: str = request.form["freq"]
     freq_response: str = request.form["freq-slider"]
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    response: str = "<div>Frequency must be less than 6 digits!</div>"
+    response: str = f"<div>Frequency must be less than {SAMPLING_RATE / 2}!</div>"
 
     freq: int = None
     try:
-        freq = int(float(freq_response))
+        freq = int(float(freq_text_response)) \
+            if freq_text_response != "" \
+                else int(float(freq_response))
     except ValueError:
         response = "<div>Frequency must be a number!</div>"
 
-    if freq is not None and abs(freq) < 100000:
+    if freq is not None and abs(freq) < SAMPLING_RATE / 2:
         sigtype: str = request.form.get("sig-type", "NONE") 
 
         # Calculate and sample the signal, generate plots
