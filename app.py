@@ -123,6 +123,10 @@ def new_image_main() -> str:
         response = f"""{imgtag}
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
+        <eq-label>Chosen frequency:</eq-label> 
+        {freq}
+    </li>
+    <li>
         <eq-label>Original equation formula:</eq-label> 
         {eq_og_template}
     </li>
