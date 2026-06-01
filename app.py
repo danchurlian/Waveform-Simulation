@@ -72,6 +72,7 @@ def image(ts: np.ndarray, ys: np.ndarray):
     buffer = io.BytesIO()
     # Save IO and into base64
     fig.savefig(buffer, format='png')
+    plt.close(fig)
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
     return f"<img id='plot-image' style='padding: 1rem' src='data:image/png;base64,{data}'/>"
