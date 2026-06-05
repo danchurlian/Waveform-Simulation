@@ -18,6 +18,7 @@
                     <form   hx-post="/image" 
                             hx-target="#graph-data" 
                             hx-swap="innerHTML"
+                            hx-trigger="submit throttle:100ms"
                             hx-on::before-request="document.querySelector('input').value = '';">
 
                         <select name="sig-type">
@@ -32,7 +33,8 @@
                             min="0" 
                             max="1000" 
                             step="10"
-                            hx-on:input="document.querySelector('form').requestSubmit()"/>
+                            hx-on:input="document.querySelector('form').requestSubmit()"
+                            />
                         <button type="submit">Submit</button>
                     </form>
                     <ul id="equation-list">

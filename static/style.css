@@ -54,6 +54,11 @@ footer {
     padding: 1rem;
 }
 
+#graph-data {
+    width: 700px;
+    height: 520px;
+}
+
 #equation-list {
     margin: 0;
 }
