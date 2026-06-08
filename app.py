@@ -75,7 +75,7 @@ def image(ts: np.ndarray, ys: np.ndarray):
     plt.close(fig)
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
-    return f"<img id='plot-image' style='padding: 1rem' src='data:image/png;base64,{data}'/>"
+    return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
 
 
 @app.post("/image")
