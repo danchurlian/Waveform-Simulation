@@ -66,9 +66,13 @@ def get_numpy_data(freq: int, waveform: str):
 
 @app.get("/audio")
 def new_audio_main():
+    # get request arguments
+    freqdata = request.args.get("freq")
+    waveform: str = request.args.get("waveform")
+
     # get ts, ys
-    freq = 440
-    __, ys = get_numpy_data(freq=freq, waveform="Square Wave")
+    freq = int(freqdata)
+    __, ys = get_numpy_data(freq=freq, waveform=waveform)
 
     # convert ys to another data type such as 32 ints
     ys = (32767 * ys).astype('int16')
@@ -151,7 +155,7 @@ def new_image_main() -> str:
         response = f"""{imgtag}
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
-        <eq-label>Chosen frequency:</eq-label> 
+        <eq-label id='freq-label'>Chosen frequency:</eq-label> 
         {freq}
     </li>
     <li>
