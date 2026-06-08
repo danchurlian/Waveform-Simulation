@@ -55,6 +55,9 @@
                     </form>
                     <ul id="equation-list">
                     </ul>
+                    <button id="listen-button" 
+                        hx-get="/audio"
+                        hx-on::after-request="" >Listen</button>
                 </div>
                 <div class="centered-container" id="graph-data">
                     <img id="plot-image" style="padding: 1rem" />

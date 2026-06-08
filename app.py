@@ -64,6 +64,21 @@ def get_numpy_data(freq: int, waveform: str):
     return ts, ys
 
 
+@app.get("/audio")
+def new_audio_main():
+    # get ts, ys
+    freq = 440
+    __, ys = get_numpy_data(freq=freq, waveform="Square Wave")
+
+    # convert ys to another data type such as 32 ints
+    ys = (32767 * ys).astype('int16')
+    # use scipy to write to an io.BytesIO
+    stream: io.BytesIO = io.BytesIO()
+    wavfile.write(stream, SAMPLING_RATE, ys)
+    # write an audio tag and use the data type attribute and base64 encoding
+    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+    return f"""<audio controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
+
 
 
 def image(ts: np.ndarray, ys: np.ndarray):
