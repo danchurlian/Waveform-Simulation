@@ -4,6 +4,7 @@ import base64
 import latex2mathml.converter
 
 import numpy as np
+from scipy.io import wavfile
 
 import matplotlib
 matplotlib.use("Agg")
@@ -55,6 +56,14 @@ WAVEFORM_EQS: dict = {
         "eq_series": "\\sin(2\\pi f t) + \\frac{1}{3}sin(2\\pi 3 f t) + \\frac{1}{5}\\sin(2\\pi 5 f t) + ..."
     },
 }
+
+
+def get_numpy_data(freq: int, waveform: str):
+    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+    ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
+    return ts, ys
+
+
 
 
 def image(ts: np.ndarray, ys: np.ndarray):
