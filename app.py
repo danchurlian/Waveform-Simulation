@@ -117,18 +117,23 @@ def image(ts: np.ndarray, ys: np.ndarray):
 def new_image_main() -> str:
     freq_text_response: str = request.form["freq"]
     freq_response: str = request.form["freq-slider"]
-    # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    response: str = f"<div>Frequency must be <= {MAX_FREQUENCY_INPUT}!</div>"
-
+    error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
     freq: int = None
+
+
+    # if int, cast it, else if a decimal, round it down and cast to int, else error message
     try:
         freq = int(float(freq_text_response)) \
             if freq_text_response != "" \
                 else int(float(freq_response))
     except ValueError:
-        response = "<div>Frequency must be a number!</div>"
+        error_msg = "Frequency must be a number!"
 
-    response += "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+    # setup error message div and setup result variable
+    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
+
+    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+
 
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
         sigtype: str = request.form.get("sig-type", "NONE") 
@@ -161,7 +166,13 @@ def new_image_main() -> str:
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
 
-        response = f"""{imgtag}
+        error_msg
+
+        response = f""" 
+<div id='error-message' hx-swap-oob='true'></div> 
+
+{imgtag}
+
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label id='freq-label'>Chosen frequency:</eq-label> 
