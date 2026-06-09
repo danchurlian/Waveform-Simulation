@@ -35,7 +35,6 @@
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
                             hx-trigger="submit throttle:100ms"
-                            hx-on::before-request="document.querySelector('input').value = '';"
                             >
 
                         <select name="sig-type">
@@ -44,13 +43,24 @@
                             <option>Triangle Wave</option>
                             <option>Square Wave</option>
                         </select>
-                        <input name="freq" type="text" autofocus="true" autocomplete="off" placeholder="Frequency (Hz)"/>
-                        <input name="freq-slider" 
+                        <input 
+                            id="freq-text"
+                            name="freq" 
+                            type="text" 
+                            autofocus="true" 
+                            autocomplete="off"  
+                            placeholder="Frequency (Hz)"
+                            oninput="document.getElementById('freq-slider').value = this.value;"
+                            />
+                        <input 
+                            id="freq-slider"
+                            name="freq-slider" 
                             type="range" 
                             min="0" 
                             max="1000" 
                             step="10"
-                            hx-on:input="document.querySelector('form').requestSubmit()"
+                            oninput="document.getElementById('freq-text').value = this.value;
+                            document.querySelector('form').requestSubmit();"
                             />
                         <button type="submit">Submit</button>
                     </form>
