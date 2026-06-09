@@ -34,10 +34,11 @@
                             hx-post="/image" 
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
-                            hx-trigger="submit throttle:100ms"
+                            hx-trigger="input from:#freq-slider throttle:100ms,
+                            input from:#sig-type-select"
                             >
 
-                        <select name="sig-type">
+                        <select id="sig-type-select" name="sig-type">
                             <option>Sine Wave</option>
                             <option>Sawtooth Wave</option>
                             <option>Triangle Wave</option>
@@ -59,8 +60,7 @@
                             min="0" 
                             max="1000" 
                             step="10"
-                            oninput="document.getElementById('freq-text').value = this.value;
-                            document.querySelector('form').requestSubmit();"
+                            oninput="document.getElementById('freq-text').value = this.value;"
                             />
                         <button type="submit">Submit</button>
                     </form>
