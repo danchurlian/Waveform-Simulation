@@ -34,8 +34,10 @@
                             hx-post="/image" 
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
-                            hx-trigger="input from:#freq-slider throttle:100ms,
-                            input from:#sig-type-select"
+                            hx-trigger="
+                                input from:#freq-slider throttle:100ms,
+                                input from:#sig-type-select,
+                                submit throttle:100ms"
                             >
 
                         <select id="sig-type-select" name="sig-type">
