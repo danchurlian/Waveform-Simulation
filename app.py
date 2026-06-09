@@ -64,14 +64,20 @@ def get_numpy_data(freq: int, waveform: str):
     return ts, ys
 
 
-@app.get("/audio")
+@app.post("/audio")
 def new_audio_main():
     # get request arguments
-    freqdata = request.args.get("freq")
-    waveform: str = request.args.get("waveform")
+    freq_text_input: str = request.form.get("freq")
+    freqdata = request.form.get("freq-slider")
+    waveform: str = request.form.get("sig-type")
 
     # get ts, ys
     freq = int(freqdata)
+    try:
+        freq = int(freq_text_input)
+    except ValueError:
+        pass
+
     __, ys = get_numpy_data(freq=freq, waveform=waveform)
 
     # convert ys to another data type such as 32 ints

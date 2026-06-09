@@ -30,7 +30,8 @@
             </header>
             <div class="left-right-container">
                 <div id="left-side">
-                    <form   hx-post="/image" 
+                    <form   id="signal-form"
+                            hx-post="/image" 
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
                             hx-trigger="submit throttle:100ms"
@@ -56,8 +57,8 @@
                     <ul id="equation-list">
                     </ul>
                     <button id="listen-button" 
-                        hx-get="/audio"
-                        hx-vals='js:{"freq": 220, "waveform": "Sawtooth Wave"}'
+                        form="signal-form"
+                        hx-post="/audio"
                         hx-swap='innerHTML' >Listen</button>
                 </div>
                 <div class="centered-container" id="graph-data">
