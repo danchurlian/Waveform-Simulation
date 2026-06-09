@@ -17,8 +17,10 @@
                 
                 form.addEventListener("htmx:afterRequest", () => {
                     const loadImageTag = document.getElementById("plot-image-load");
-                    const imgData = loadImageTag.getAttribute("src");
-                    finalImageTag.setAttribute("src", imgData);
+                    if (loadImageTag) {
+                        const imgData = loadImageTag.getAttribute("src");
+                        finalImageTag.setAttribute("src", imgData);
+                    }
                 });
             })
         </script>

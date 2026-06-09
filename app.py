@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 SAMPLING_RATE: int = 11025
+MAX_FREQUENCY_INPUT: int = 1000
 
 def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
@@ -117,7 +118,7 @@ def new_image_main() -> str:
     freq_text_response: str = request.form["freq"]
     freq_response: str = request.form["freq-slider"]
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    response: str = f"<div>Frequency must be less than {SAMPLING_RATE / 2}!</div>"
+    response: str = f"<div>Frequency must be <= {MAX_FREQUENCY_INPUT}!</div>"
 
     freq: int = None
     try:
@@ -127,7 +128,9 @@ def new_image_main() -> str:
     except ValueError:
         response = "<div>Frequency must be a number!</div>"
 
-    if freq is not None and abs(freq) < SAMPLING_RATE / 2:
+    response += "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+
+    if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
         sigtype: str = request.form.get("sig-type", "NONE") 
 
         # Calculate and sample the signal, generate plots
