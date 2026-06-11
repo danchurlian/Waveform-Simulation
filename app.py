@@ -88,7 +88,7 @@ def new_audio_main():
     wavfile.write(stream, SAMPLING_RATE, ys)
     # write an audio tag and use the data type attribute and base64 encoding
     datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
-    return f"""<audio controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
+    return f"""<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
 
 
 
@@ -165,8 +165,6 @@ def new_image_main() -> str:
 
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
-
-        error_msg
 
         response = f""" 
 <div id='error-message' hx-swap-oob='true'></div> 

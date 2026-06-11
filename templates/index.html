@@ -71,10 +71,15 @@
                     <div id="error-message"></div>
                     <ul id="equation-list">
                     </ul>
-                    <button id="listen-button" 
-                        form="signal-form"
-                        hx-post="/audio"
-                        hx-swap='innerHTML' >Listen</button>
+                    <div id="listen-container">
+                        <button id="listen-button" 
+                            form="signal-form"
+                            hx-post="/audio"
+                            hx-target="#audio-output"
+                            hx-swap="outerHTML" >
+                            Listen</button>
+                        <audio id="audio-output" />
+                    </div>
                 </div>
                 <div class="centered-container" id="graph-data">
                     <img id="plot-image" style="padding: 1rem" />
