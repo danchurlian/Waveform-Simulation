@@ -174,7 +174,7 @@ def new_image_main() -> str:
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label id='freq-label'>Chosen frequency:</eq-label> 
-        {freq}
+        {freq} Hz
     </li>
     <li>
         <eq-label>Original equation formula:</eq-label> 
