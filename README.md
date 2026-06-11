@@ -1,7 +1,7 @@
 # Waveform Simulation
 
-**Stack:** HTMX, CSS, Javascript, Python Flask
-**Dependencies:** latex2mathml, numpy, scipy, matplotlib
+**Stack:** HTMX, CSS, Javascript, Python Flask  
+**Dependencies:** latex2mathml, numpy, scipy, matplotlib  
 
 This a simulation where you generate signals, spectrums, and audio based on typing in a specific frequency you want to hear. The frequency you type in can range from 0Hz to 1000Hz.   
 
@@ -34,5 +34,5 @@ flask --app app.py run
 I plan to add more features soon. Enjoy!
 
 ## Contact
-Email: chudaniel400@gmail.com
+Email: chudaniel400@gmail.com  
 LinkedIn: https://www.linkedin.com/in/daniel-chu-13a107387/
