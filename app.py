@@ -11,9 +11,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-SAMPLING_RATE: int = 11025
+
+# constants ----------------------------------------
+SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
 
+
+# waveform formulas --------------------------------
 def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
 
