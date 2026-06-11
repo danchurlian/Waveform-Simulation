@@ -7,6 +7,23 @@
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
         
         <link href="{{ url_for('static', filename='style.css')}}" rel="stylesheet" />
+
+        <script>
+            // For rendering the final image from the buffer
+            document.addEventListener("DOMContentLoaded", () => {
+                const finalImageTag = document.getElementById("plot-image");
+                const graphDataDiv = document.getElementById("graph-data");
+                const form = document.querySelector("form");
+                
+                form.addEventListener("htmx:afterRequest", () => {
+                    const loadImageTag = document.getElementById("plot-image-load");
+                    if (loadImageTag) {
+                        const imgData = loadImageTag.getAttribute("src");
+                        finalImageTag.setAttribute("src", imgData);
+                    }
+                });
+            })
+        </script>
     </head>
     <body>
         <main>
@@ -15,25 +32,58 @@
             </header>
             <div class="left-right-container">
                 <div id="left-side">
-                    <form   hx-post="/image" 
-                            hx-target="#graph-data" 
-                            hx-swap="innerHTML"
-                            hx-on::before-request="document.querySelector('input').value = '';">
+                    <form   id="signal-form"
+                            hx-post="/image" 
+                            hx-target="#plot-image-load" 
+                            hx-swap="outerHTML"
+                            hx-trigger="
+                                input from:#freq-slider throttle:100ms,
+                                input from:#sig-type-select,
+                                submit throttle:100ms"
+                            >
 
-                        <select name="sig-type">
+                        <select id="sig-type-select" name="sig-type">
                             <option>Sine Wave</option>
                             <option>Sawtooth Wave</option>
                             <option>Triangle Wave</option>
                             <option>Square Wave</option>
                         </select>
-                        <input name="freq" type="text" autofocus="true" autocomplete="off" placeholder="Frequency (Hz)"/>
+                        <input 
+                            id="freq-text"
+                            name="freq" 
+                            type="text" 
+                            autofocus="true" 
+                            autocomplete="off"  
+                            placeholder="Frequency (Hz)"
+                            oninput="document.getElementById('freq-slider').value = this.value;"
+                            />
+                        <input 
+                            id="freq-slider"
+                            name="freq-slider" 
+                            type="range" 
+                            min="0" 
+                            max="1000" 
+                            step="10"
+                            oninput="document.getElementById('freq-text').value = this.value;"
+                            />
                         <button type="submit">Submit</button>
                     </form>
+                    <div id="error-message"></div>
                     <ul id="equation-list">
                     </ul>
+                    <div id="listen-container">
+                        <button id="listen-button" 
+                            form="signal-form"
+                            hx-post="/audio"
+                            hx-target="#audio-output"
+                            hx-swap="outerHTML" >
+                            Listen</button>
+                        <audio id="audio-output" />
+                    </div>
                 </div>
                 <div class="centered-container" id="graph-data">
-                    <img id="plot-image" />
+                    <img id="plot-image" style="padding: 1rem" />
+                    <img id="plot-image-load" style="display:none" />
                 </div>
             </div>
         </main>

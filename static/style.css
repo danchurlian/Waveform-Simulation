@@ -54,6 +54,14 @@ footer {
     padding: 1rem;
 }
 
+#graph-data {
+    width: 700px;
+    height: 520px;
+}
+
+
+/* Left side -------------------------- */
+
 #equation-list {
     margin: 0;
 }
@@ -72,7 +80,7 @@ form input {
     width: 11rem;
 }
 
-form button {
+button {
     background-color: var(--header-color);
     color: white;    
     font-size: 1.2rem;
@@ -82,9 +90,10 @@ form button {
     height: 2rem;
 
     cursor: pointer;
+    transition: background-color 0.15s
 }
 
-form button:hover {
+button:hover {
     background-color: darkblue;
 }
 
@@ -94,4 +103,9 @@ form select {
 
 eq-label {
     font-weight: bold;
+}
+
+#listen-button {
+    display: block;
+    margin: 1rem 0;
 }

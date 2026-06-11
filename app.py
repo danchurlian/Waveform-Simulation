@@ -4,14 +4,20 @@ import base64
 import latex2mathml.converter
 
 import numpy as np
+from scipy.io import wavfile
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-SAMPLING_RATE: int = 11025
 
+# constants ----------------------------------------
+SAMPLING_RATE: int = 44100
+MAX_FREQUENCY_INPUT: int = 1000
+
+
+# waveform formulas --------------------------------
 def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
 
@@ -57,6 +63,39 @@ WAVEFORM_EQS: dict = {
 }
 
 
+def get_numpy_data(freq: int, waveform: str):
+    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+    ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
+    return ts, ys
+
+
+@app.post("/audio")
+def new_audio_main():
+    # get request arguments
+    freq_text_input: str = request.form.get("freq")
+    freqdata = request.form.get("freq-slider")
+    waveform: str = request.form.get("sig-type")
+
+    # get ts, ys
+    freq = int(freqdata)
+    try:
+        freq = int(freq_text_input)
+    except ValueError:
+        pass
+
+    __, ys = get_numpy_data(freq=freq, waveform=waveform)
+
+    # convert ys to another data type such as 32 ints
+    ys = (32767 * ys).astype('int16')
+    # use scipy to write to an io.BytesIO
+    stream: io.BytesIO = io.BytesIO()
+    wavfile.write(stream, SAMPLING_RATE, ys)
+    # write an audio tag and use the data type attribute and base64 encoding
+    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+    return f"""<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
+
+
+
 def image(ts: np.ndarray, ys: np.ndarray):
     fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
     hs: np.ndarray = np.abs(np.fft.rfft(ys))
@@ -72,24 +111,35 @@ def image(ts: np.ndarray, ys: np.ndarray):
     buffer = io.BytesIO()
     # Save IO and into base64
     fig.savefig(buffer, format='png')
+    plt.close(fig)
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
-    return f"<img id='plot-image' style='padding: 1rem' src='data:image/png;base64,{data}'/>"
+    return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
 
 
 @app.post("/image")
 def new_image_main() -> str:
-    freq_response: str = request.form["freq"]
-    # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    response: str = "<div>Frequency must be less than 6 digits!</div>"
-
+    freq_text_response: str = request.form["freq"]
+    freq_response: str = request.form["freq-slider"]
+    error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
     freq: int = None
-    try:
-        freq = int(float(freq_response))
-    except ValueError:
-        response = "<div>Frequency must be a number!</div>"
 
-    if freq is not None and abs(freq) < 100000:
+
+    # if int, cast it, else if a decimal, round it down and cast to int, else error message
+    try:
+        freq = int(float(freq_text_response)) \
+            if freq_text_response != "" \
+                else int(float(freq_response))
+    except ValueError:
+        error_msg = "Frequency must be a number!"
+
+    # setup error message div and setup result variable
+    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
+
+    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+
+
+    if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
         sigtype: str = request.form.get("sig-type", "NONE") 
 
         # Calculate and sample the signal, generate plots
@@ -120,8 +170,16 @@ def new_image_main() -> str:
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
 
-        response = f"""{imgtag}
+        response = f""" 
+<div id='error-message' hx-swap-oob='true'></div> 
+
+{imgtag}
+
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
+    <li>
+        <eq-label id='freq-label'>Chosen frequency:</eq-label> 
+        {freq} Hz
+    </li>
     <li>
         <eq-label>Original equation formula:</eq-label> 
         {eq_og_template}

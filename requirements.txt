@@ -1,4 +1,5 @@
 flask
 numpy
+scipy
 matplotlib
 latex2mathml
