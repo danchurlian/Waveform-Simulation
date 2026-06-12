@@ -50,6 +50,8 @@ def square_wave(ts: np.ndarray, freq: int = 1):
     return np.sign(np.sin(2 * np.pi * freq * ts))
 
 
+# ---------------------------------------------------------------
+
 JUMP_TABLE: dict = {
     "Sine Wave": sin_wave,
     "Triangle Wave": triangle_wave,
@@ -79,27 +81,28 @@ WAVEFORM_EQS: dict = {
 }
 
 
+# ---------------------------------------------------------------
+
+
 def get_numpy_data(freq: int, waveform: str):
     ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
     ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
     return ts, ys
 
 
-@app.post("/audio")
-def new_audio_main():
-    # get request arguments
-    freq_text_input: str = request.form.get("freq")
-    freqdata = request.form.get("freq-slider")
-    waveform: str = request.form.get("sig-type")
+@app.post("/audio", response_class=HTMLResponse)
+def new_audio_main(data: Annotated[FrequencyForm, Form()]):
+    freq: int = data.freq_slider
 
-    # get ts, ys
-    freq = int(freqdata)
+    # for text input only
+    # if int, cast it, else if a decimal, round it down and cast to int, else error message
     try:
-        freq = int(freq_text_input)
+        freq = int(float(data.freq_text))
     except ValueError:
         pass
 
-    __, ys = get_numpy_data(freq=freq, waveform=waveform)
+    # ts, ys
+    __, ys = get_numpy_data(freq=freq, waveform=data.sig_type)
 
     # convert ys to another data type such as 32 ints
     ys = (32767 * ys).astype('int16')
@@ -108,7 +111,8 @@ def new_audio_main():
     wavfile.write(stream, SAMPLING_RATE, ys)
     # write an audio tag and use the data type attribute and base64 encoding
     datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
-    return f"""<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
+
+    return HTMLResponse(content=f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />", status_code=200)
 
 
 
@@ -131,6 +135,7 @@ def image(ts: np.ndarray, ys: np.ndarray):
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
     return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
+
 
 
 @app.post("/image", response_class=HTMLResponse)
@@ -183,6 +188,7 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
         eq_original = latex2mathml.converter.convert(eq_original)
         eq_series = latex2mathml.converter.convert(eq_series)
 
+
         response = f""" 
 <div id='error-message' hx-swap-oob='true'></div> 
 
@@ -211,9 +217,10 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
     </li>
 </ul>
 """ 
-
     return HTMLResponse(content=response, status_code=200)
     
+
+
 @app.get("/")
 def index(request: Request):
     return templates.TemplateResponse(request=request, name='index.html')
