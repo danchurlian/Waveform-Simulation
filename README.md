@@ -1,6 +1,6 @@
 # Waveform Simulation
 
-**Stack:** HTMX, CSS, Javascript, Python Flask  
+**Stack:** HTML with HTMX, CSS, Javascript, Python FastAPI (originally Flask)  
 **Dependencies:** latex2mathml, numpy, scipy, matplotlib  
 
 This a simulation where you generate signals, spectrums, and audio based on typing in a specific frequency you want to hear. The frequency you type in can range from 0Hz to 1000Hz.   
@@ -21,15 +21,6 @@ I was reading a textbook called ThinkDsp by Allen B. Downey, which explored how 
 I had to make a proof of concept to see if rendering Matplotlib images to the front end was even possible. It turned out it was indeed possible but it was quite inefficient. I still have yet to find a more efficient way to generate plots of the signals.  
 
 This was also my first time using HTMX. It worked really well with this application because much of the logic was already done in the backend, and the bulk of the webstie was just creating new HTML elements in the back end and transferring them to the front end.  
-
-## Installation
-The website is yet to be deployed. If you want to build from source, you can clone the repo first, and then run the Flask application like this.
-
-```
-source .venv/bin/activate
-pip install -r requirements.txt
-flask --app app.py run 
-```
 
 I plan to add more features soon. Enjoy!
 
