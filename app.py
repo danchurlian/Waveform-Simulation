@@ -28,7 +28,7 @@ MAX_FREQUENCY_INPUT: int = 1000
 
 
 class FrequencyForm(BaseModel):
-    freq_text: int | None
+    freq_text: str
     freq_slider: int
     sig_type: str
 
@@ -137,17 +137,15 @@ def image(ts: np.ndarray, ys: np.ndarray):
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
 
-    freq: int = data.freq_text if data.freq_text is not None else data.freq_slider
+    freq: int = data.freq_slider
 
+    # for text input only
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    """
     try:
-        freq_int = int(float(freq)) \
-            if freq != "" \
-                else int(float(freq_slider))
+        freq = int(float(data.freq_text))
     except ValueError:
         error_msg = "Frequency must be a number!"
-"""
+
 
     # setup error message div and setup result variable
     error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
