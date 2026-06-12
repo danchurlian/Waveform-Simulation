@@ -135,11 +135,6 @@ def image(ts: np.ndarray, ys: np.ndarray):
 
 @app.post("/image", response_class=HTMLResponse)
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
-    print(data)
-    print(data)
-    print(data)
-    print(data)
-
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
 
     freq: int = data.freq_text if data.freq_text is not None else data.freq_slider
