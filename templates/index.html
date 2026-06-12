@@ -6,7 +6,7 @@
         <!-- HTMX script right here -->
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
         
-        <link href="{{ url_for('static', filename='style.css')}}" rel="stylesheet" />
+        <link href="{{ url_for('static', path='style.css')}}" rel="stylesheet" />
 
         <script>
             // For rendering the final image from the buffer
@@ -42,7 +42,7 @@
                                 submit throttle:100ms"
                             >
 
-                        <select id="sig-type-select" name="sig-type">
+                        <select id="sig-type-select" name="sig_type">
                             <option>Sine Wave</option>
                             <option>Sawtooth Wave</option>
                             <option>Triangle Wave</option>
@@ -50,7 +50,7 @@
                         </select>
                         <input 
                             id="freq-text"
-                            name="freq" 
+                            name="freq_text" 
                             type="text" 
                             autofocus="true" 
                             autocomplete="off"  
@@ -59,7 +59,7 @@
                             />
                         <input 
                             id="freq-slider"
-                            name="freq-slider" 
+                            name="freq_slider" 
                             type="range" 
                             min="0" 
                             max="1000" 

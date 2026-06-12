@@ -1,7 +1,15 @@
-from flask import Flask, render_template, request
+from fastapi import FastAPI, Form
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 import io
 import base64
 import latex2mathml.converter
+
+from typing_extensions import Annotated
+from pydantic import BaseModel
 
 import numpy as np
 from scipy.io import wavfile
@@ -10,11 +18,19 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-app = Flask(__name__)
+app = FastAPI()
+app.mount("/static", StaticFiles(directory='static'), name='static')
+templates = Jinja2Templates(directory="templates")
 
 # constants ----------------------------------------
 SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
+
+
+class FrequencyForm(BaseModel):
+    freq_text: int | None
+    freq_slider: int
+    sig_type: str
 
 
 # waveform formulas --------------------------------
@@ -117,21 +133,26 @@ def image(ts: np.ndarray, ys: np.ndarray):
     return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
 
 
-@app.post("/image")
-def new_image_main() -> str:
-    freq_text_response: str = request.form["freq"]
-    freq_response: str = request.form["freq-slider"]
-    error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
-    freq: int = None
+@app.post("/image", response_class=HTMLResponse)
+def new_image_main(data: Annotated[FrequencyForm, Form()]):
+    print(data)
+    print(data)
+    print(data)
+    print(data)
 
+    error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
+
+    freq: int = data.freq_text if data.freq_text is not None else data.freq_slider
 
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
+    """
     try:
-        freq = int(float(freq_text_response)) \
-            if freq_text_response != "" \
-                else int(float(freq_response))
+        freq_int = int(float(freq)) \
+            if freq != "" \
+                else int(float(freq_slider))
     except ValueError:
         error_msg = "Frequency must be a number!"
+"""
 
     # setup error message div and setup result variable
     error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
@@ -140,25 +161,24 @@ def new_image_main() -> str:
 
 
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-        sigtype: str = request.form.get("sig-type", "NONE") 
 
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
+        ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
         imgtag: str = image(ts, ys)
 
         # math formulas, using MathML
         eq_original: str = "No object" 
         eq_series: str = "No object" 
 
-        assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
-        assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
-        assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
+        assert data.sig_type in WAVEFORM_EQS, f"Signal type {data.sig_type} is not known!"
+        assert "eq_og"in WAVEFORM_EQS[data.sig_type], f"Original equations is not found for {data.sig_type}!"
+        assert "eq_series" in WAVEFORM_EQS[data.sig_type], f"Fourier series expansion is not found for {data.sig_type}!"
         
         # Format the equations
         # assign variables the strings
-        eq_og_template: str = WAVEFORM_EQS[sigtype]["eq_og"]
-        eq_series_template: str = WAVEFORM_EQS[sigtype]["eq_series"]
+        eq_og_template: str = WAVEFORM_EQS[data.sig_type]["eq_og"]
+        eq_series_template: str = WAVEFORM_EQS[data.sig_type]["eq_series"]
 
         eq_original = eq_og_template.replace(" f ", f"({freq})")
         eq_series = eq_series_template.replace(" f ", f"({freq})")
@@ -199,12 +219,8 @@ def new_image_main() -> str:
 </ul>
 """ 
 
-    return response
+    return HTMLResponse(content=response, status_code=200)
     
 @app.get("/")
-def index():
-    return render_template("index.html")
-
-if __name__ == "__main__":
-    print("Running")
-    app.run()
+def index(request: Request):
+    return templates.TemplateResponse(request=request, name='index.html')
