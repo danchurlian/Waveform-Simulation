@@ -134,17 +134,7 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 
     # ts, ys
     __, ys = get_numpy_data(freq=freq, waveform=data.sig_type)
-
-    # convert ys to another data type such as 32 ints
-    ys = (32767 * ys).astype('int16')
-    # use scipy to write to an io.BytesIO
-    stream: io.BytesIO = io.BytesIO()
-    wavfile.write(stream, SAMPLING_RATE, ys)
-    # write an audio tag and use the data type attribute and base64 encoding
-    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
-
-    return HTMLResponse(content=f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />", status_code=200)
-
+    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
 def image(ts: np.ndarray, ys: np.ndarray):
