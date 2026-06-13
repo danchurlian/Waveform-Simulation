@@ -26,6 +26,7 @@ templates = Jinja2Templates(directory="templates")
 SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
 
+type HTMLString = str
 
 class FrequencyForm(BaseModel):
     freq_text: str
@@ -88,6 +89,36 @@ def get_numpy_data(freq: int, waveform: str):
     ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
     ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
     return ts, ys
+
+
+def chord(freq_list: list[int], waveform: str) -> np.ndarray:
+    final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
+    for freq in freq_list:
+        __, ys = get_numpy_data(freq, waveform)
+        final_ys += ys
+
+    ys_max = np.max(final_ys)
+    ys_min = np.min(final_ys)
+
+    return 2 * ((final_ys - ys_min) / (ys_max - ys_min))  - 1
+
+
+def get_audio_tag(ys: np.ndarray) -> HTMLString:
+    ys = (32767 * ys).astype('int16')
+    # use scipy to write to an io.BytesIO
+    stream: io.BytesIO = io.BytesIO()
+    wavfile.write(stream, SAMPLING_RATE, ys)
+    # write an audio tag and use the data type attribute and base64 encoding
+    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+    return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
+
+
+
+@app.get("/test-chord", response_class=HTMLResponse)
+def test_chord():
+    freq_list: list = [220, 440, 523, 659, 880]
+    ys = chord(freq_list, "Square Wave")
+    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
 @app.post("/audio", response_class=HTMLResponse)
