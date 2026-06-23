@@ -123,17 +123,10 @@ def test_chord():
 
 @app.post("/audio", response_class=HTMLResponse)
 def new_audio_main(data: Annotated[FrequencyForm, Form()]):
-    freq: int = data.freq_slider
+    # future data handling
+    freqs: list[int] = [int(freq) for freq in data.freq_text]
 
-    # for text input only
-    # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    try:
-        freq = int(float(data.freq_text))
-    except ValueError:
-        pass
-
-    # ts, ys
-    __, ys = get_numpy_data(freq=freq, waveform=data.sig_type)
+    ys = chord(freqs, waveform=data.sig_type)
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
