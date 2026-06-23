@@ -29,7 +29,7 @@ MAX_FREQUENCY_INPUT: int = 1000
 type HTMLString = str
 
 class FrequencyForm(BaseModel):
-    freq_text: str
+    freq_text: list[str]
     freq_slider: int
     sig_type: str
 
@@ -164,13 +164,17 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
 
     freq: int = data.freq_slider
+    # add some error handling to this
+    freqs: list[int] = [int(freq) for freq in data.freq_text]
 
     # for text input only
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
+    """
     try:
         freq = int(float(data.freq_text))
     except ValueError:
         error_msg = "Frequency must be a number!"
+    """
 
 
     # setup error message div and setup result variable
@@ -183,7 +187,8 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
+        ys: np.ndarray = chord(freqs, data.sig_type)
+        # ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
         imgtag: str = image(ts, ys)
 
         # math formulas, using MathML
