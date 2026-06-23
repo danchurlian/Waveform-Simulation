@@ -62,6 +62,15 @@
                 form.appendChild(waveFormObj);
                 console.log(listTop);
             }
+
+            const removeWave = (form) => {
+                console.log("Removing");
+                if (listTop > 0) {
+                    const topItem = waveList.pop();
+                    topItem.remove();
+                    listTop -= 1;
+                }
+            }
         </script>
     </head>
     <body>
@@ -114,7 +123,8 @@
 
                     <button type="submit" form="#signal-form">Submit</button>
                     <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
-
+                    <button id='delete-wave-button' onclick='removeWave(document.querySelector("form"))'>Delete wave</button>
+                    
                     <div id="error-message"></div>
                     <ul id="equation-list">
                     </ul>
