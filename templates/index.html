@@ -22,7 +22,33 @@
                         finalImageTag.setAttribute("src", imgData);
                     }
                 });
-            })
+            });
+
+            // have a stack 
+            let waveList = [];
+            let listTop = 0;
+
+            const addWave = (form) => {
+                console.log("Clicked");
+
+                const newTextField = `<input 
+                            name="freq_text" 
+                            type="text" 
+                            autofocus="true" 
+                            autocomplete="off"  
+                            placeholder="Frequency (Hz)"
+                            required="true"
+                            />`;
+                const waveFormObj = document.createElement("div");
+                waveFormObj.id = `wave-form-item-${listTop}`;
+                waveFormObj.insertAdjacentHTML("beforeend", newTextField);
+
+                waveList.push(waveFormObj);
+                listTop += 1;
+
+                form.appendChild(waveFormObj);
+                console.log(listTop);
+            }
         </script>
     </head>
     <body>
@@ -48,27 +74,34 @@
                             <option>Triangle Wave</option>
                             <option>Square Wave</option>
                         </select>
-                        <input 
-                            id="freq-text"
-                            name="freq_text" 
-                            type="text" 
-                            autofocus="true" 
-                            autocomplete="off"  
-                            placeholder="Frequency (Hz)"
-                            required="true"
-                            oninput="document.getElementById('freq-slider').value = this.value;"
-                            />
-                        <input 
-                            id="freq-slider"
-                            name="freq_slider" 
-                            type="range" 
-                            min="0" 
-                            max="1000" 
-                            step="10"
-                            oninput="document.getElementById('freq-text').value = this.value;"
-                            />
+
+                        <div id="wave-form-item" class="wave-form-item">
+                            <input 
+                                id="freq-text"
+                                name="freq_text" 
+                                type="text" 
+                                autofocus="true" 
+                                autocomplete="off"  
+                                placeholder="Frequency (Hz)"
+                                required="true"
+                                oninput="document.getElementById('freq-slider').value = this.value;"
+                                />
+                            <input 
+                                id="freq-slider"
+                                name="freq_slider" 
+                                type="range" 
+                                min="0" 
+                                max="1000" 
+                                step="10"
+                                oninput="document.getElementById('freq-text').value = this.value;"
+                                />
+
+                        </div>
                         <button type="submit">Submit</button>
                     </form>
+
+                    <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
+
                     <div id="error-message"></div>
                     <ul id="equation-list">
                     </ul>
