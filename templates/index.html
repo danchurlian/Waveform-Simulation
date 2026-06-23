@@ -32,6 +32,7 @@
                 console.log("Clicked");
 
                 const newTextField = `<input 
+                            id="freq-text-${listTop}"
                             name="freq_text" 
                             type="text" 
                             autofocus="true" 
@@ -39,9 +40,21 @@
                             placeholder="Frequency (Hz)"
                             required="true"
                             />`;
+
+                const newSliderField = `<input 
+                                name="freq_slider" 
+                                type="range" 
+                                min="0" 
+                                max="1000" 
+                                step="10"
+                                oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
+                                />`;
+                // Create the wave object
                 const waveFormObj = document.createElement("div");
                 waveFormObj.id = `wave-form-item-${listTop}`;
+                waveFormObj.classList.add("wave-form-item");
                 waveFormObj.insertAdjacentHTML("beforeend", newTextField);
+                waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
 
                 waveList.push(waveFormObj);
                 listTop += 1;
@@ -97,9 +110,9 @@
                                 />
 
                         </div>
-                        <button type="submit">Submit</button>
                     </form>
 
+                    <button type="submit" form="#signal-form">Submit</button>
                     <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
 
                     <div id="error-message"></div>

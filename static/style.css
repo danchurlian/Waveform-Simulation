@@ -74,11 +74,13 @@ form input {
     width: 11rem;
 }
 
-#wave-form-item {
+.wave-form-item {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 5px;
+
+    margin: 5px;
 }
 
 button {
