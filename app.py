@@ -191,28 +191,31 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
         assert data.sig_type in WAVEFORM_EQS, f"Signal type {data.sig_type} is not known!"
         assert "eq_og"in WAVEFORM_EQS[data.sig_type], f"Original equations is not found for {data.sig_type}!"
         assert "eq_series" in WAVEFORM_EQS[data.sig_type], f"Fourier series expansion is not found for {data.sig_type}!"
-        
-        # Format the equations
-        # assign variables the strings
-        eq_og_template: str = WAVEFORM_EQS[data.sig_type]["eq_og"]
-        eq_series_template: str = WAVEFORM_EQS[data.sig_type]["eq_series"]
-
-        eq_original = eq_og_template.replace(" f ", f"({freq})")
-        eq_series = eq_series_template.replace(" f ", f"({freq})")
-
-        # convert each expression to MathML
-        eq_og_template = latex2mathml.converter.convert(eq_og_template)
-        eq_series_template = latex2mathml.converter.convert(eq_series_template)
-
-        eq_original = latex2mathml.converter.convert(eq_original)
-        eq_series = latex2mathml.converter.convert(eq_series)
 
 
-        response = f""" 
-<div id='error-message' hx-swap-oob='true'></div> 
 
-{imgtag}
+        # if there is only one frequency, display equation information.
+        # if there is a list of frequencies, do not display equation information.
+        equation_list_html: HTMLString = "<ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>"
 
+        if (len(freqs) == 1):
+            # Format the equations
+            # assign variables the strings
+            eq_og_template: str = WAVEFORM_EQS[data.sig_type]["eq_og"]
+            eq_series_template: str = WAVEFORM_EQS[data.sig_type]["eq_series"]
+
+            eq_original: str = eq_og_template.replace(" f ", f"({freq})")
+            eq_series: str = eq_series_template.replace(" f ", f"({freq})")
+
+            # convert each expression to MathML
+            eq_og_template = latex2mathml.converter.convert(eq_og_template)
+            eq_series_template = latex2mathml.converter.convert(eq_series_template)
+
+            eq_original = latex2mathml.converter.convert(eq_original)
+            eq_series = latex2mathml.converter.convert(eq_series)
+
+            # assembly the HTML content
+            equation_list_html = f"""
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label id='freq-label'>Chosen frequency:</eq-label> 
@@ -235,7 +238,15 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
         {eq_series}
     </li>
 </ul>
+"""
+
+        # final response HTML that is returned
+        response = f""" 
+<div id='error-message' hx-swap-oob='true'></div> 
+{imgtag}
+{equation_list_html}
 """ 
+
     return HTMLResponse(content=response, status_code=200)
     
 
