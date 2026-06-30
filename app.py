@@ -1,7 +1,15 @@
-from flask import Flask, render_template, request
+from fastapi import FastAPI, Form
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 import io
 import base64
 import latex2mathml.converter
+
+from typing_extensions import Annotated
+from pydantic import BaseModel
 
 import numpy as np
 from scipy.io import wavfile
@@ -10,11 +18,20 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-app = Flask(__name__)
+app = FastAPI()
+app.mount("/static", StaticFiles(directory='static'), name='static')
+templates = Jinja2Templates(directory="templates")
 
 # constants ----------------------------------------
 SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
+
+type HTMLString = str
+
+class FrequencyForm(BaseModel):
+    freq_text: list[str]
+    freq_slider: int
+    sig_type: str
 
 
 # waveform formulas --------------------------------
@@ -33,6 +50,8 @@ def triangle_wave(ts: np.ndarray, freq: int = 1):
 def square_wave(ts: np.ndarray, freq: int = 1):
     return np.sign(np.sin(2 * np.pi * freq * ts))
 
+
+# ---------------------------------------------------------------
 
 JUMP_TABLE: dict = {
     "Sine Wave": sin_wave,
@@ -63,37 +82,52 @@ WAVEFORM_EQS: dict = {
 }
 
 
+# ---------------------------------------------------------------
+
+
 def get_numpy_data(freq: int, waveform: str):
     ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
     ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
     return ts, ys
 
 
-@app.post("/audio")
-def new_audio_main():
-    # get request arguments
-    freq_text_input: str = request.form.get("freq")
-    freqdata = request.form.get("freq-slider")
-    waveform: str = request.form.get("sig-type")
+def chord(freq_list: list[int], waveform: str) -> np.ndarray:
+    final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
+    for freq in freq_list:
+        __, ys = get_numpy_data(freq, waveform)
+        final_ys += ys
 
-    # get ts, ys
-    freq = int(freqdata)
-    try:
-        freq = int(freq_text_input)
-    except ValueError:
-        pass
+    ys_max = np.max(final_ys)
+    ys_min = np.min(final_ys)
 
-    __, ys = get_numpy_data(freq=freq, waveform=waveform)
+    return 2 * ((final_ys - ys_min) / (ys_max - ys_min))  - 1
 
-    # convert ys to another data type such as 32 ints
+
+def get_audio_tag(ys: np.ndarray) -> HTMLString:
     ys = (32767 * ys).astype('int16')
     # use scipy to write to an io.BytesIO
     stream: io.BytesIO = io.BytesIO()
     wavfile.write(stream, SAMPLING_RATE, ys)
     # write an audio tag and use the data type attribute and base64 encoding
     datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
-    return f"""<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"""
+    return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
 
+
+
+@app.get("/test-chord", response_class=HTMLResponse)
+def test_chord():
+    freq_list: list = [220, 440, 523, 659, 880]
+    ys = chord(freq_list, "Square Wave")
+    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
+
+
+@app.post("/audio", response_class=HTMLResponse)
+def new_audio_main(data: Annotated[FrequencyForm, Form()]):
+    # future data handling
+    freqs: list[int] = [int(freq) for freq in data.freq_text]
+
+    ys = chord(freqs, waveform=data.sig_type)
+    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
 def image(ts: np.ndarray, ys: np.ndarray):
@@ -117,21 +151,24 @@ def image(ts: np.ndarray, ys: np.ndarray):
     return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
 
 
-@app.post("/image")
-def new_image_main() -> str:
-    freq_text_response: str = request.form["freq"]
-    freq_response: str = request.form["freq-slider"]
+
+@app.post("/image", response_class=HTMLResponse)
+def new_image_main(data: Annotated[FrequencyForm, Form()]):
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
-    freq: int = None
 
+    freq: int = data.freq_slider
+    # add some error handling to this
+    freqs: list[int] = [int(freq) for freq in data.freq_text]
 
+    # for text input only
     # if int, cast it, else if a decimal, round it down and cast to int, else error message
+    """
     try:
-        freq = int(float(freq_text_response)) \
-            if freq_text_response != "" \
-                else int(float(freq_response))
+        freq = int(float(data.freq_text))
     except ValueError:
         error_msg = "Frequency must be a number!"
+    """
+
 
     # setup error message div and setup result variable
     error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
@@ -140,41 +177,45 @@ def new_image_main() -> str:
 
 
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-        sigtype: str = request.form.get("sig-type", "NONE") 
 
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = JUMP_TABLE[sigtype](ts, freq=freq)
+        ys: np.ndarray = chord(freqs, data.sig_type)
+        # ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
         imgtag: str = image(ts, ys)
 
         # math formulas, using MathML
         eq_original: str = "No object" 
         eq_series: str = "No object" 
 
-        assert sigtype in WAVEFORM_EQS, f"Signal type {sigtype} is not known!"
-        assert "eq_og"in WAVEFORM_EQS[sigtype], f"Original equations is not found for {sigtype}!"
-        assert "eq_series" in WAVEFORM_EQS[sigtype], f"Fourier series expansion is not found for {sigtype}!"
-        
-        # Format the equations
-        # assign variables the strings
-        eq_og_template: str = WAVEFORM_EQS[sigtype]["eq_og"]
-        eq_series_template: str = WAVEFORM_EQS[sigtype]["eq_series"]
+        assert data.sig_type in WAVEFORM_EQS, f"Signal type {data.sig_type} is not known!"
+        assert "eq_og"in WAVEFORM_EQS[data.sig_type], f"Original equations is not found for {data.sig_type}!"
+        assert "eq_series" in WAVEFORM_EQS[data.sig_type], f"Fourier series expansion is not found for {data.sig_type}!"
 
-        eq_original = eq_og_template.replace(" f ", f"({freq})")
-        eq_series = eq_series_template.replace(" f ", f"({freq})")
 
-        # convert each expression to MathML
-        eq_og_template = latex2mathml.converter.convert(eq_og_template)
-        eq_series_template = latex2mathml.converter.convert(eq_series_template)
 
-        eq_original = latex2mathml.converter.convert(eq_original)
-        eq_series = latex2mathml.converter.convert(eq_series)
+        # if there is only one frequency, display equation information.
+        # if there is a list of frequencies, do not display equation information.
+        equation_list_html: HTMLString = "<ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>"
 
-        response = f""" 
-<div id='error-message' hx-swap-oob='true'></div> 
+        if (len(freqs) == 1):
+            # Format the equations
+            # assign variables the strings
+            eq_og_template: str = WAVEFORM_EQS[data.sig_type]["eq_og"]
+            eq_series_template: str = WAVEFORM_EQS[data.sig_type]["eq_series"]
 
-{imgtag}
+            eq_original: str = eq_og_template.replace(" f ", f"({freq})")
+            eq_series: str = eq_series_template.replace(" f ", f"({freq})")
 
+            # convert each expression to MathML
+            eq_og_template = latex2mathml.converter.convert(eq_og_template)
+            eq_series_template = latex2mathml.converter.convert(eq_series_template)
+
+            eq_original = latex2mathml.converter.convert(eq_original)
+            eq_series = latex2mathml.converter.convert(eq_series)
+
+            # assembly the HTML content
+            equation_list_html = f"""
 <ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
     <li>
         <eq-label id='freq-label'>Chosen frequency:</eq-label> 
@@ -197,14 +238,19 @@ def new_image_main() -> str:
         {eq_series}
     </li>
 </ul>
+"""
+
+        # final response HTML that is returned
+        response = f""" 
+<div id='error-message' hx-swap-oob='true'></div> 
+{imgtag}
+{equation_list_html}
 """ 
 
-    return response
+    return HTMLResponse(content=response, status_code=200)
     
-@app.get("/")
-def index():
-    return render_template("index.html")
 
-if __name__ == "__main__":
-    print("Running")
-    app.run()
+
+@app.get("/")
+def index(request: Request):
+    return templates.TemplateResponse(request=request, name='index.html')

@@ -6,7 +6,7 @@
         <!-- HTMX script right here -->
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
         
-        <link href="{{ url_for('static', filename='style.css')}}" rel="stylesheet" />
+        <link href="{{ url_for('static', path='style.css')}}" rel="stylesheet" />
 
         <script>
             // For rendering the final image from the buffer
@@ -22,7 +22,55 @@
                         finalImageTag.setAttribute("src", imgData);
                     }
                 });
-            })
+            });
+
+            // have a stack 
+            let waveList = [];
+            let listTop = 0;
+
+            const addWave = (form) => {
+                console.log("Clicked");
+
+                const newTextField = `<input 
+                            id="freq-text-${listTop}"
+                            name="freq_text" 
+                            type="number" 
+                            autofocus="true" 
+                            autocomplete="off"  
+                            placeholder="Frequency (Hz)"
+                            required="true"
+                            />`;
+
+                const newSliderField = `<input 
+                                name="freq_slider" 
+                                type="range" 
+                                min="0" 
+                                max="1000" 
+                                step="10"
+                                oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
+                                />`;
+                // Create the wave object
+                const waveFormObj = document.createElement("div");
+                waveFormObj.id = `wave-form-item-${listTop}`;
+                waveFormObj.classList.add("wave-form-item");
+                waveFormObj.insertAdjacentHTML("beforeend", newTextField);
+                waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
+
+                waveList.push(waveFormObj);
+                listTop += 1;
+
+                form.appendChild(waveFormObj);
+                console.log(listTop);
+            }
+
+            const removeWave = (form) => {
+                console.log("Removing");
+                if (listTop > 0) {
+                    const topItem = waveList.pop();
+                    topItem.remove();
+                    listTop -= 1;
+                }
+            }
         </script>
     </head>
     <body>
@@ -37,37 +85,46 @@
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
                             hx-trigger="
-                                input from:#freq-slider throttle:100ms,
+                                input from:#freq-slider,
                                 input from:#sig-type-select,
                                 submit throttle:100ms"
                             >
 
-                        <select id="sig-type-select" name="sig-type">
+                        <select id="sig-type-select" name="sig_type">
                             <option>Sine Wave</option>
                             <option>Sawtooth Wave</option>
                             <option>Triangle Wave</option>
                             <option>Square Wave</option>
                         </select>
-                        <input 
-                            id="freq-text"
-                            name="freq" 
-                            type="text" 
-                            autofocus="true" 
-                            autocomplete="off"  
-                            placeholder="Frequency (Hz)"
-                            oninput="document.getElementById('freq-slider').value = this.value;"
-                            />
-                        <input 
-                            id="freq-slider"
-                            name="freq-slider" 
-                            type="range" 
-                            min="0" 
-                            max="1000" 
-                            step="10"
-                            oninput="document.getElementById('freq-text').value = this.value;"
-                            />
-                        <button type="submit">Submit</button>
+
+                        <div id="wave-form-item" class="wave-form-item">
+                            <input 
+                                id="freq-text"
+                                name="freq_text" 
+                                type="number" 
+                                autofocus="true" 
+                                autocomplete="off"  
+                                placeholder="Frequency (Hz)"
+                                required="true"
+                                oninput="document.getElementById('freq-slider').value = this.value;"
+                                />
+                            <input 
+                                id="freq-slider"
+                                name="freq_slider" 
+                                type="range" 
+                                min="0" 
+                                max="1000" 
+                                step="10"
+                                oninput="document.getElementById('freq-text').value = this.value;"
+                                />
+
+                        </div>
                     </form>
+
+                    <button type="submit" form="signal-form">Submit</button>
+                    <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
+                    <button id='delete-wave-button' onclick='removeWave(document.querySelector("form"))'>Delete wave</button>
+                    
                     <div id="error-message"></div>
                     <ul id="equation-list">
                     </ul>
