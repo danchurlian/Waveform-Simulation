@@ -117,3 +117,6 @@ eq-label {
 .waveform-item-delete {
     background-color: var(--item-delete-color);
 }
+.waveform-item-delete:hover {
+    background-color: rgb(97, 5, 8);
+}
