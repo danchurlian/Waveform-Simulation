@@ -24,13 +24,8 @@
                 });
             });
 
-            // have a stack 
-            let waveList = [];
-            let listTop = 0;
 
             const addWave = (form) => {
-                console.log("Clicked");
-
                 const newTextField = `<input 
                             id="freq-text-${listTop}"
                             name="freq_text" 
@@ -42,21 +37,21 @@
                             />`;
 
                 const newSliderField = `<input 
-                                name="freq_slider" 
-                                type="range" 
-                                min="0" 
-                                max="1000" 
-                                step="10"
-                                oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
-                                />`;
+                            name="freq_slider" 
+                            type="range" 
+                            min="0" 
+                            max="1000" 
+                            step="10"
+                            oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
+                            />`;
               
-
-                // when you click on the delete button, remove that specific button from the array
+                // create a delete button for the item
                 const deleteButton = document.createElement("button");
                 deleteButton.className = "waveform-item-delete";
                 deleteButton.textContent = "Delete";
                 deleteButton.type = "button";
 
+                // when you click on the delete button, remove that specific button from the array
                 deleteButton.addEventListener("click", (event) => {
                     const currentItem = event.target.parentElement;
                     currentItem.remove();
@@ -70,20 +65,7 @@
                 waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
                 waveFormObj.appendChild(deleteButton);
 
-                waveList.push(waveFormObj);
-                listTop += 1;
-
                 form.appendChild(waveFormObj);
-                console.log(listTop);
-            }
-
-            const removeWave = (form) => {
-                console.log("Removing");
-                if (listTop > 0) {
-                    const topItem = waveList.pop();
-                    topItem.remove();
-                    listTop -= 1;
-                }
             }
         </script>
     </head>
@@ -131,13 +113,11 @@
                                 step="10"
                                 oninput="document.getElementById('freq-text').value = this.value;"
                                 />
-
                         </div>
                     </form>
 
                     <button type="submit" form="signal-form">Submit</button>
                     <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
-                    <button id='delete-wave-button' onclick='removeWave(document.querySelector("form"))'>Delete wave</button>
                     
                     <div id="error-message"></div>
                     <ul id="equation-list">
