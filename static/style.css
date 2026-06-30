@@ -1,5 +1,6 @@
 :root {
     --header-color: rgb(85, 96, 255);
+    --item-delete-color: rgb(230, 41, 47);
 }
 
 
@@ -111,4 +112,8 @@ eq-label {
 #listen-button {
     display: block;
     margin: 1rem 0;
+}
+
+.waveform-item-delete {
+    background-color: var(--item-delete-color);
 }
