@@ -37,6 +37,7 @@
                             />`;
 
                 const newSliderField = `<input 
+                            class="freq-slider"
                             name="freq_slider" 
                             type="range" 
                             min="0" 
@@ -80,7 +81,7 @@
                             hx-target="#plot-image-load" 
                             hx-swap="outerHTML"
                             hx-trigger="
-                                input from:#freq-slider,
+                                input[event.target.matches('.freq-slider')] from:body,
                                 input from:#sig-type-select,
                                 submit throttle:100ms"
                             >
@@ -106,6 +107,7 @@
                                 />
                             <input 
                                 id="freq-slider"
+                                class="freq-slider"
                                 name="freq_slider" 
                                 type="range" 
                                 min="0" 
