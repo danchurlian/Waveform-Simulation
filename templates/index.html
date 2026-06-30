@@ -27,7 +27,7 @@
 
             const addWave = (form) => {
                 const newTextField = `<input 
-                            id="freq-text-${listTop}"
+                            class="freq-text-field"
                             name="freq_text" 
                             type="number" 
                             autofocus="true" 
@@ -42,7 +42,7 @@
                             min="0" 
                             max="1000" 
                             step="10"
-                            oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
+                            oninput="event.target.parentElement.querySelector('.freq-text-field').value = this.value;"
                             />`;
               
                 // create a delete button for the item
@@ -59,7 +59,6 @@
 
                 // Create the wave object
                 const waveFormObj = document.createElement("div");
-                waveFormObj.id = `wave-form-item-${listTop}`;
                 waveFormObj.classList.add("wave-form-item");
                 waveFormObj.insertAdjacentHTML("beforeend", newTextField);
                 waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
