@@ -49,12 +49,26 @@
                                 step="10"
                                 oninput="document.getElementById('freq-text-${listTop}').value = this.value;"
                                 />`;
+              
+
+                // when you click on the delete button, remove that specific button from the array
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "waveform-item-delete";
+                deleteButton.textContent = "Delete";
+                deleteButton.type = "button";
+
+                deleteButton.addEventListener("click", (event) => {
+                    const currentItem = event.target.parentElement;
+                    currentItem.remove();
+                });
+
                 // Create the wave object
                 const waveFormObj = document.createElement("div");
                 waveFormObj.id = `wave-form-item-${listTop}`;
                 waveFormObj.classList.add("wave-form-item");
                 waveFormObj.insertAdjacentHTML("beforeend", newTextField);
                 waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
+                waveFormObj.appendChild(deleteButton);
 
                 waveList.push(waveFormObj);
                 listTop += 1;
