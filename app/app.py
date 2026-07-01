@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, HTTPException
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -123,8 +123,15 @@ def test_chord():
 
 @app.post("/audio", response_class=HTMLResponse)
 def new_audio_main(data: Annotated[FrequencyForm, Form()]):
-    # future data handling
-    freqs: list[int] = [int(freq) for freq in data.freq_text]
+    try:
+        freqs: list[int] = [int(freq) for freq in data.freq_text]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="One of the frequencies is not an integer")
+
+    # Check for negative numbers
+    for freq in freqs:
+        if freq < 0:
+            raise HTTPException(status_code=400, detail=f"The frequency {freq} cannot be negative")
 
     ys = chord(freqs, waveform=data.sig_type)
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
