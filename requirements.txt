@@ -1,4 +1,6 @@
 fastapi[standard]
+httpx
+pytest
 numpy
 scipy
 matplotlib

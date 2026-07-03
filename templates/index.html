@@ -5,6 +5,7 @@
         <title>Waveform website</title>
         <!-- HTMX script right here -->
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4" integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg" crossorigin="anonymous"></script>
         
         <link href="{{ url_for('static', path='style.css')}}" rel="stylesheet" />
 
@@ -69,7 +70,7 @@
             }
         </script>
     </head>
-    <body>
+    <body hx-ext="response-targets">
         <main>
             <header class="centered-container">
                 <h1>Waveform Simulation</h1>
@@ -129,9 +130,11 @@
                             form="signal-form"
                             hx-post="/audio"
                             hx-target="#audio-output"
+                            hx-target-400="#audio-output"
                             hx-swap="outerHTML" >
                             Listen</button>
-                        <audio id="audio-output" />
+                        <audio id="audio-output"></audio>
+                        <div id="audio-output-error"></div>
                     </div>
                 </div>
                 <div class="centered-container" id="graph-data">
