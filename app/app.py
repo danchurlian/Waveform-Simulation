@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form 
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 
 import io
 import base64
@@ -18,6 +19,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
@@ -32,6 +34,22 @@ class FrequencyForm(BaseModel):
     freq_text: list[str]
     freq_slider: int
     sig_type: str
+
+
+
+# Audio generation exception when clicking the listen button with
+# invalid data
+class AudioGenerationException(Exception):
+    def __init__(self, detail: str):
+        self.detail = detail
+        super().__init__(detail)
+        pass
+
+@app.exception_handler(AudioGenerationException)
+async def audio_exception_handler(_request, exc):
+    return HTMLResponse(content=f"<div id='audio-output'>{exc.detail}</div>", status_code=400) 
+
+
 
 
 # waveform formulas --------------------------------
@@ -103,6 +121,8 @@ def chord(freq_list: list[int], waveform: str) -> np.ndarray:
     return 2 * ((final_ys - ys_min) / (ys_max - ys_min))  - 1
 
 
+
+
 def get_audio_tag(ys: np.ndarray) -> HTMLString:
     ys = (32767 * ys).astype('int16')
     # use scipy to write to an io.BytesIO
@@ -121,20 +141,24 @@ def test_chord():
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
+
+
 @app.post("/audio", response_class=HTMLResponse)
 def new_audio_main(data: Annotated[FrequencyForm, Form()]):
     try:
         freqs: list[int] = [int(freq) for freq in data.freq_text]
     except ValueError:
-        raise HTTPException(status_code=400, detail="One of the frequencies is not an integer")
+        raise AudioGenerationException(detail="One of the frequencies is not an integer!")
 
     # Check for negative numbers
     for freq in freqs:
         if freq < 0:
-            raise HTTPException(status_code=400, detail=f"The frequency {freq} cannot be negative")
+            raise AudioGenerationException(detail=f"The frequency {freq} cannot be negative!")
 
     ys = chord(freqs, waveform=data.sig_type)
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
+
+
 
 
 def image(ts: np.ndarray, ys: np.ndarray):
@@ -156,6 +180,7 @@ def image(ts: np.ndarray, ys: np.ndarray):
     # Then return the data as an image tag
     data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
     return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
+
 
 
 
