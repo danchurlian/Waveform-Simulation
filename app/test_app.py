@@ -13,7 +13,7 @@ def test_audio():
     assert response.status_code == 200
 
 
-def test_audio_nan_chars():
+def test_audio_nan_ints():
     response = client.post("/audio", data={
         "freq_text": ["asdb", "400"], 
         "freq_slider": 100, 
@@ -33,8 +33,26 @@ def test_audio_negative_freq():
 
 def test_audio_negative_freq_2():
     response = client.post("/audio", data={
-        "freq_text": ["200", "-400"], 
+        "freq_text": ["-200", "400"], 
         "freq_slider": 200, 
         "sig_type": "Sine Wave"
         })
     assert response.status_code == 400
+
+
+def test_audio_nan_ints_2():
+    response = client.post("/audio", data={
+        "freq_text": ["soefijsoiefjoseijfasdb"], 
+        "freq_slider": 20, 
+        "sig_type": "Sine Wave"
+        })
+    assert response.status_code == 400
+
+
+def test_audio_no_freqs():
+    response = client.post("/audio", data={
+        "freq_text": [], 
+        "freq_slider": 200, 
+        "sig_type": "Sine Wave"
+        })
+    assert response.status_code != 200
