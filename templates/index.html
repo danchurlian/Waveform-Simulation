@@ -26,7 +26,8 @@
             });
 
 
-            const addWave = (form) => {
+            const addWave = (form, frequency) => {
+                const parser = new DOMParser();
                 const newTextField = `<input 
                             class="freq-text-field"
                             name="freq_text" 
@@ -37,6 +38,8 @@
                             required="true"
                             />`;
 
+                const fieldElement = parser.parseFromString(newTextField, "text/html").body.firstElementChild;
+                
                 const newSliderField = `<input 
                             class="freq-slider"
                             name="freq_slider" 
@@ -46,6 +49,12 @@
                             step="10"
                             oninput="event.target.parentElement.querySelector('.freq-text-field').value = this.value;"
                             />`;
+                const sliderElement = parser.parseFromString(newSliderField, "text/html").body.firstElementChild;
+
+                if (frequency) {
+                    fieldElement.value = frequency;
+                    sliderElement.value = frequency;
+                }
               
                 // create a delete button for the item
                 const deleteButton = document.createElement("button");
@@ -62,8 +71,8 @@
                 // Create the wave object
                 const waveFormObj = document.createElement("div");
                 waveFormObj.classList.add("wave-form-item");
-                waveFormObj.insertAdjacentHTML("beforeend", newTextField);
-                waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
+                waveFormObj.appendChild(fieldElement);
+                waveFormObj.appendChild(sliderElement);
                 waveFormObj.appendChild(deleteButton);
 
                 form.appendChild(waveFormObj);
@@ -104,6 +113,7 @@
                                 autocomplete="off"  
                                 placeholder="Frequency (Hz)"
                                 required="true"
+                                value="440"
                                 oninput="document.getElementById('freq-slider').value = this.value;"
                                 />
                             <input 
@@ -114,13 +124,14 @@
                                 min="0" 
                                 max="1000" 
                                 step="10"
+                                value="440"
                                 oninput="document.getElementById('freq-text').value = this.value;"
                                 />
                         </div>
                     </form>
 
                     <button type="submit" form="signal-form">Submit</button>
-                    <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
+                    <button id='add-wave-button' onclick='addWave(document.querySelector("form"), 440)'>Add wave</button>
                     
                     <div id="error-message"></div>
                     <ul id="equation-list">
