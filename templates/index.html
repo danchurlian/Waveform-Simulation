@@ -77,6 +77,39 @@
 
                 form.appendChild(waveFormObj);
             }
+
+
+            const loadProject = (target) => {
+                const freqList = JSON.parse(target.dataset.freqs);
+                const titleStr = target.dataset.title;
+                const waveformStr = target.dataset.waveform;
+                const form = document.getElementById("signal-form");
+
+                console.log(freqList);
+                console.log(titleStr);
+                console.log(waveformStr);
+
+                // delete the old extra waveform items
+                waveformItems = document.querySelectorAll(".wave-form-item");
+                waveformItems.forEach((item) => {
+                    if (item.id != "wave-form-item")
+                        item.remove();
+                })
+
+
+                for (let i = 0; i < freqList.length; i++) {
+                    const freq = freqList[i];
+                    if (i == 0) {
+                        const firstFreqText = document.getElementById("freq-text");
+                        const firstFreqSlider = document.getElementById("freq-slider");
+
+                        firstFreqText.value = freq;
+                        firstFreqSlider.value = freq;
+                    } else {
+                        addWave(form, freq);
+                    }
+                }
+            }
         </script>
     </head>
     <body hx-ext="response-targets">

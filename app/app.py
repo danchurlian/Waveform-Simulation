@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 
 import io
 import base64
+import json
 import latex2mathml.converter
 
 from typing_extensions import Annotated
@@ -123,6 +124,10 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
     <button 
         commandfor="load-projects-dialog" 
         command="close"
+        data-title="{project_info.title}"
+        data-waveform="{project_info.waveform}"
+        data-freqs="{json.dumps(project_info.frequencies)}"
+        onclick="loadProject(event.target)"
         >
         Load
     </button>
