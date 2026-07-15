@@ -138,9 +138,9 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 @app.get("/projects", response_class=HTMLResponse)
 def get_project_list() -> HTMLResponse:
     test_project = ProjectInfo(
-            frequencies=[100, 200, 300],
-            title="My Project",
-            waveform="Sine Wave"
+            frequencies=[440, 554, 660, 880],
+            title="A Major Chord",
+            waveform="Sawtooth Wave"
             )
     content: HTMLString = load_project_info(test_project)
     return HTMLResponse(content=content, status_code=200)

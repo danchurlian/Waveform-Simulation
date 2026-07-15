@@ -84,18 +84,14 @@
                 const titleStr = target.dataset.title;
                 const waveformStr = target.dataset.waveform;
                 const form = document.getElementById("signal-form");
-
-                console.log(freqList);
-                console.log(titleStr);
-                console.log(waveformStr);
-
+                const waveformSelect = document.getElementById("sig-type-select");
+                
                 // delete the old extra waveform items
                 waveformItems = document.querySelectorAll(".wave-form-item");
                 waveformItems.forEach((item) => {
                     if (item.id != "wave-form-item")
                         item.remove();
                 })
-
 
                 for (let i = 0; i < freqList.length; i++) {
                     const freq = freqList[i];
@@ -109,6 +105,8 @@
                         addWave(form, freq);
                     }
                 }
+
+                waveformSelect.value = waveformStr;
             }
         </script>
     </head>
