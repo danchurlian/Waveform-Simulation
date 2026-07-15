@@ -120,6 +120,15 @@
             </header>
             <div class="left-right-container">
                 <div id="left-side">
+                    <button 
+                        id="open-projects-dialog-button"
+                        hx-get="/projects"
+                        hx-target="#project-list-container"
+                        hx-swap="afterBegin"
+                        command="show-modal" 
+                        commandfor="load-projects-dialog"
+                        >Load projects</button>
+
                     <form   id="signal-form"
                             hx-post="/image" 
                             hx-target="#plot-image-load" 
@@ -197,16 +206,7 @@
                 <div id="project-list-container">
                     <!-- show name, freq list, waveform string, load button -->
                 </div>
-
             </dialog>
-            <button 
-              hx-get="/projects"
-              hx-target="#project-list-container"
-              hx-swap="afterBegin"
-              command="show-modal" 
-              commandfor="load-projects-dialog"
-              >Load projects</button>
-
         </main>
         <footer class="centered-container centered-vertical-container">
             Copyright (c) 2026 by Daniel Chu. All rights reserved.

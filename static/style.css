@@ -111,7 +111,11 @@ eq-label {
 
 #listen-button {
     display: block;
-    margin: 1rem 0;
+    margin-top: 0.5rem;
+}
+
+#audio-output {
+    margin-top: 0.5rem;
 }
 
 .waveform-item-delete {
@@ -119,4 +123,8 @@ eq-label {
 }
 .waveform-item-delete:hover {
     background-color: rgb(97, 5, 8);
+}
+
+#open-projects-dialog-button {
+    margin-bottom: 0.5rem;
 }
