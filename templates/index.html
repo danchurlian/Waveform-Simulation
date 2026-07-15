@@ -153,6 +153,25 @@
                     <img id="plot-image-load" style="display:none" />
                 </div>
             </div>
+
+            <dialog id="load-projects-dialog">
+                <h1>Load projects here...</h1>
+
+                <div id="project-list-container">
+                    <!-- show name, freq list, waveform string, load button -->
+
+                </div>
+
+                <button commandfor="load-projects-dialog" command="close">Close</button>
+            </dialog>
+            <button 
+              hx-get="/projects"
+              hx-target="#project-list-container"
+              hx-swap="afterBegin"
+              command="show-modal" 
+              commandfor="load-projects-dialog"
+              >Load projects</button>
+
         </main>
         <footer class="centered-container centered-vertical-container">
             Copyright (c) 2026 by Daniel Chu. All rights reserved.

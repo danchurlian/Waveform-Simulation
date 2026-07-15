@@ -36,6 +36,19 @@ class FrequencyForm(BaseModel):
     sig_type: str
 
 
+class ProjectInfo:
+    frequencies: list[int]
+    waveform: str
+    title: str
+
+    def __init__(self, frequencies: list[int] = [],
+                 waveform: str = "",
+                 title: str = "Unnamed"):
+        self.frequencies = frequencies
+        self.waveform = waveform
+        self.title = title
+        
+
 
 # Audio generation exception when clicking the listen button with
 # invalid data
@@ -98,6 +111,19 @@ WAVEFORM_EQS: dict = {
         "eq_series": "\\sin(2\\pi f t) + \\frac{1}{3}sin(2\\pi 3 f t) + \\frac{1}{5}\\sin(2\\pi 5 f t) + ..."
     },
 }
+
+
+# ---------------------------------------------------------------
+
+
+
+
+@app.get("/projects", response_class=HTMLResponse)
+def get_project_list() -> HTMLResponse:
+    content: HTMLString = """<div>
+    <button>Load this</button>
+    </div>""" * 3
+    return HTMLResponse(content=content, status_code=200)
 
 
 # ---------------------------------------------------------------
