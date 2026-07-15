@@ -85,6 +85,7 @@
                 const waveformStr = target.dataset.waveform;
                 const form = document.getElementById("signal-form");
                 const waveformSelect = document.getElementById("sig-type-select");
+                const listenButton = document.getElementById("listen-button");
                 
                 // delete the old extra waveform items
                 waveformItems = document.querySelectorAll(".wave-form-item");
@@ -107,6 +108,8 @@
                 }
 
                 waveformSelect.value = waveformStr;
+                form.dispatchEvent(new Event('projectLoad'));
+                listenButton.dispatchEvent(new Event('projectLoad'));
             }
         </script>
     </head>
@@ -124,7 +127,8 @@
                             hx-trigger="
                                 input[event.target.matches('.freq-slider')] from:body,
                                 input from:#sig-type-select,
-                                submit throttle:100ms"
+                                submit throttle:100ms,
+                                projectLoad",
                             >
 
                         <select id="sig-type-select" name="sig_type">
@@ -173,7 +177,8 @@
                             hx-post="/audio"
                             hx-target="#audio-output"
                             hx-target-400="#audio-output"
-                            hx-swap="outerHTML" >
+                            hx-swap="outerHTML"
+                            hx-trigger="click, projectLoad">
                             Listen</button>
                         <audio id="audio-output"></audio>
                         <div id="audio-output-error"></div>
