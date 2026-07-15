@@ -116,13 +116,28 @@ WAVEFORM_EQS: dict = {
 # ---------------------------------------------------------------
 
 
+def load_project_info(project_info: ProjectInfo) -> HTMLString:
+    content: HTMLString = f"""<div>
+    <span></span>
+    <span>"{project_info.title}": {str(project_info.frequencies)}</span>
+    <button 
+        commandfor="load-projects-dialog" 
+        command="close"
+        >
+        Load
+    </button>
+    </div>"""
+    return content
 
 
 @app.get("/projects", response_class=HTMLResponse)
 def get_project_list() -> HTMLResponse:
-    content: HTMLString = """<div>
-    <button>Load this</button>
-    </div>""" * 3
+    test_project = ProjectInfo(
+            frequencies=[100, 200, 300],
+            title="My Project",
+            waveform="Sine Wave"
+            )
+    content: HTMLString = load_project_info(test_project)
     return HTMLResponse(content=content, status_code=200)
 
 

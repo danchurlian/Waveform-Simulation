@@ -155,14 +155,13 @@
             </div>
 
             <dialog id="load-projects-dialog">
+                <button commandfor="load-projects-dialog" command="close">Close</button>
                 <h1>Load projects here...</h1>
 
                 <div id="project-list-container">
                     <!-- show name, freq list, waveform string, load button -->
-
                 </div>
 
-                <button commandfor="load-projects-dialog" command="close">Close</button>
             </dialog>
             <button 
               hx-get="/projects"
