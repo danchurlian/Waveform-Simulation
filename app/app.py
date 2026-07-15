@@ -274,7 +274,7 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
         # if there is only one frequency, display equation information.
         # if there is a list of frequencies, do not display equation information.
-        equation_list_html: HTMLString = "<ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>"
+        equation_list_html: HTMLString = "<ul id='equation-list' hx-swap-oob='true' style='display: none; padding: 1rem 0 0 1rem'>"
 
         if (len(freqs) == 1):
             # Format the equations
