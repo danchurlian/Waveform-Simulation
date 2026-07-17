@@ -4,6 +4,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+import sqlalchemy
+import dotenv
 
 import io
 import base64
@@ -20,6 +22,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+
+env_values = dotenv.dotenv_values(".env")
+engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
@@ -117,6 +122,19 @@ WAVEFORM_EQS: dict = {
 # ---------------------------------------------------------------
 
 
+def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
+    assert user_id is not None, "user id is not given!"
+    res = []
+
+    with engine.begin() as conn:
+        query_result = conn.execute(sqlalchemy.text("SELECT frequencies, project_name, waveform FROM project WHERE user_id=1;"))
+        print(query_result)
+        for row in query_result:
+            res.append(ProjectInfo(frequencies=row.frequencies, waveform=row.waveform, title=row.project_name))
+
+    return res
+
+
 def load_project_info(project_info: ProjectInfo) -> HTMLString:
     content: HTMLString = f"""<div>
     <span></span>
@@ -137,12 +155,19 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 
 @app.get("/projects", response_class=HTMLResponse)
 def get_project_list() -> HTMLResponse:
+    project_list: list[ProjectInfo] = get_project_info_from_database(1)
     test_project = ProjectInfo(
             frequencies=[440, 554, 660, 880],
             title="A Major Chord",
             waveform="Sawtooth Wave"
             )
-    content: HTMLString = load_project_info(test_project)
+    project_list.append(test_project)
+    print(project_list)
+    content: HTMLString = ""
+
+    for proj in project_list:
+        content = "".join([content, load_project_info(proj)])
+
     return HTMLResponse(content=content, status_code=200)
 
 
