@@ -162,6 +162,11 @@ def get_project_list() -> HTMLResponse:
             waveform="Sawtooth Wave"
             )
     project_list.append(test_project)
+    project_list.append(ProjectInfo(
+            frequencies=[392, 466, 554, 660, 784],
+            title="Diminished Chord",
+            waveform="Sawtooth Wave"
+        ))
     print(project_list)
     content: HTMLString = ""
 
