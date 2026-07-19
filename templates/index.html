@@ -129,6 +129,10 @@
                         commandfor="load-projects-dialog"
                         >Load projects</button>
 
+                    <button
+                        id="save-project-button"
+                        >Save</button>
+
                     <form   id="signal-form"
                             hx-post="/image" 
                             hx-target="#plot-image-load" 
@@ -139,6 +143,8 @@
                                 submit throttle:100ms,
                                 projectLoad",
                             >
+
+                        <input id="project-name-input" type="text" placeholder="Untitled Project"></input>
 
                         <select id="sig-type-select" name="sig_type">
                             <option>Sine Wave</option>
