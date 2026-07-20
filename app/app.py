@@ -128,7 +128,6 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
 
     with engine.begin() as conn:
         query_result = conn.execute(sqlalchemy.text("SELECT frequencies, project_name, waveform FROM project WHERE user_id=1;"))
-        print(query_result)
         for row in query_result:
             res.append(ProjectInfo(frequencies=row.frequencies, waveform=row.waveform, title=row.project_name))
 
@@ -173,7 +172,6 @@ def get_project_list() -> HTMLResponse:
             title="Diminished Chord",
             waveform="Sawtooth Wave"
         ))
-    print(project_list)
     content: HTMLString = ""
 
     for proj in project_list:
