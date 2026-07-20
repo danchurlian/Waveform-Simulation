@@ -40,6 +40,7 @@ class FrequencyForm(BaseModel):
     freq_text: list[str]
     freq_slider: int
     sig_type: str
+    title: str
 
 
 class ProjectInfo:
@@ -53,6 +54,9 @@ class ProjectInfo:
         self.frequencies = frequencies
         self.waveform = waveform
         self.title = title
+
+    def __str__(self) -> str:
+        return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
         
 
 
@@ -136,7 +140,16 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
 
 @app.post("/save", response_class=HTMLResponse)
 def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
-    print("List of frequencies", form.freq_text)
+    freq_list: list[int] = []
+    try:
+        freq_list = [int(freq_str) for freq_str in form.freq_text]
+    except ValueError:
+        return HTMLResponse(content="Frequencies must be integers!")
+
+    project_info = ProjectInfo(frequencies=freq_list, 
+                               waveform=form.sig_type, 
+                               title=form.title)
+    print(project_info)
     return HTMLResponse(content="Saved!", status_code=200)
 
 
