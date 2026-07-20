@@ -135,6 +135,12 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
     return res
 
 
+@app.post("/save", response_class=HTMLResponse)
+def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
+    print("List of frequencies", form.freq_text)
+    return HTMLResponse(content="Saved!", status_code=200)
+
+
 def load_project_info(project_info: ProjectInfo) -> HTMLString:
     content: HTMLString = f"""<div>
     <span></span>
