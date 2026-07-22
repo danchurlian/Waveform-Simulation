@@ -145,15 +145,17 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
     res: bool = True
 
     with sql_engine.begin() as conn:
-        query_result = conn.execute(sqlalchemy.text("SELECT project_name, project_id FROM project WHERE user_id=:user_id"),
-                     [{"user_id": user_id}])
+        query_result = conn.execute(
+                sqlalchemy.select(project_db_table.c.project_name, project_db_table.c.project_id) \
+                        .where(project_db_table.c.project_name == project_info.title \
+                                and project_db_table.c.user_id == user_id
+                               )
+                )
+
         existing_id: int | NoneType = None
 
         # check if one exists
-        # TODO: find better solution
-        for row in query_result:
-            cur_name: str = row[0]
-            cur_id: int = row[1]
+        for cur_name, cur_id in query_result:
             if cur_name == project_info.title:
                 existing_id = cur_id
                 break
