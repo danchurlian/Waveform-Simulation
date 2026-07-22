@@ -231,17 +231,6 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 @app.get("/projects", response_class=HTMLResponse)
 def get_project_list() -> HTMLResponse:
     project_list: list[ProjectInfo] = get_project_info_from_database(1)
-    test_project = ProjectInfo(
-            frequencies=[440, 554, 660, 880],
-            title="A Major Chord",
-            waveform="Sawtooth Wave"
-            )
-    project_list.append(test_project)
-    project_list.append(ProjectInfo(
-            frequencies=[392, 466, 554, 660, 784],
-            title="Diminished Chord",
-            waveform="Sawtooth Wave"
-        ))
     content: HTMLString = ""
 
     for proj in project_list:
