@@ -24,7 +24,9 @@ import matplotlib.pyplot as plt
 
 
 env_values = dotenv.dotenv_values(".env")
-engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
+sql_engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
+sql_metadata = sqlalchemy.MetaData()
+project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
@@ -130,10 +132,35 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
     assert user_id is not None, "user id is not given!"
     res = []
 
-    with engine.begin() as conn:
+    with sql_engine.begin() as conn:
         query_result = conn.execute(sqlalchemy.text("SELECT frequencies, project_name, waveform FROM project WHERE user_id=1;"))
         for row in query_result:
             res.append(ProjectInfo(frequencies=row.frequencies, waveform=row.waveform, title=row.project_name))
+
+    return res
+
+def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bool:
+    res: bool = True
+    with sql_engine.begin() as conn:
+        query_result = conn.execute(sqlalchemy.text("SELECT project_name FROM project WHERE user_id=:user_id"),
+                     [{"user_id": user_id}])
+        for row in query_result:
+            cur_name: str = row[0]
+            if cur_name == project_info.title:
+                print(f"Found duplicate '{cur_name}' in database!")
+                res = False
+                break
+
+        if res:
+            # then save 
+            print("Saving", project_info.title)
+            stmt = sqlalchemy.insert(project_db_table).values(
+                    project_name=project_info.title,
+                    frequencies=project_info.frequencies,
+                    waveform=project_info.waveform,
+                    user_id=user_id)
+            insert_result = conn.execute(stmt)
+            print(stmt, insert_result)
 
     return res
 
@@ -144,12 +171,16 @@ def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
     try:
         freq_list = [int(freq_str) for freq_str in form.freq_text]
     except ValueError:
-        return HTMLResponse(content="Frequencies must be integers!")
+        return HTMLResponse(content="Frequencies must be integers!", status_code=200)
 
     project_info = ProjectInfo(frequencies=freq_list, 
                                waveform=form.sig_type, 
                                title=form.title)
-    print(project_info)
+
+    save_success: bool = save_project_info_to_database(1, project_info)
+    if not save_success:
+        return HTMLResponse(content="Save failed!", status_code=200)
+    
     return HTMLResponse(content="Saved!", status_code=200)
 
 
