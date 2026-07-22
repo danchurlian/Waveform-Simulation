@@ -1,3 +1,5 @@
+from types import NoneType
+
 from fastapi import FastAPI, Form 
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
@@ -141,26 +143,48 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
 
 def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bool:
     res: bool = True
+
     with sql_engine.begin() as conn:
-        query_result = conn.execute(sqlalchemy.text("SELECT project_name FROM project WHERE user_id=:user_id"),
+        query_result = conn.execute(sqlalchemy.text("SELECT project_name, project_id FROM project WHERE user_id=:user_id"),
                      [{"user_id": user_id}])
+        existing_id: int | NoneType = None
+
+        # check if one exists
+        # TODO: find better solution
         for row in query_result:
             cur_name: str = row[0]
+            cur_id: int = row[1]
             if cur_name == project_info.title:
-                print(f"Found duplicate '{cur_name}' in database!")
-                res = False
+                existing_id = cur_id
                 break
 
-        if res:
-            # then save 
-            print("Saving", project_info.title)
-            stmt = sqlalchemy.insert(project_db_table).values(
-                    project_name=project_info.title,
-                    frequencies=project_info.frequencies,
-                    waveform=project_info.waveform,
-                    user_id=user_id)
-            insert_result = conn.execute(stmt)
-            print(stmt, insert_result)
+        if existing_id is None:
+            # create a new entry 
+            stmt = sqlalchemy.insert(project_db_table) \
+                    .values(
+                        project_name=project_info.title,
+                        frequencies=project_info.frequencies,
+                        waveform=project_info.waveform,
+                        user_id=user_id
+                    )
+            conn.execute(stmt)
+
+        elif existing_id:
+            # update the existing entry
+            stmt = sqlalchemy.update(project_db_table) \
+                    .where(project_db_table.c.project_id == existing_id) \
+                    .values(
+                        project_name=project_info.title,
+                        frequencies=project_info.frequencies,
+                        waveform=project_info.waveform,
+                        user_id=user_id
+                    )
+            conn.execute(stmt)
+
+        else:
+            # saving failed for some reason
+            print("Saving error")
+            res = False
 
     return res
 
