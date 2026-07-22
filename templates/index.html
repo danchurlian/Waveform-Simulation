@@ -83,9 +83,11 @@
                 const freqList = JSON.parse(target.dataset.freqs);
                 const titleStr = target.dataset.title;
                 const waveformStr = target.dataset.waveform;
+
                 const form = document.getElementById("signal-form");
                 const waveformSelect = document.getElementById("sig-type-select");
                 const listenButton = document.getElementById("listen-button");
+                const titleInput = document.getElementById("project-name-input")
                 
                 // delete the old extra waveform items
                 waveformItems = document.querySelectorAll(".wave-form-item");
@@ -108,6 +110,7 @@
                 }
 
                 waveformSelect.value = waveformStr;
+                titleInput.value = titleStr;
                 form.dispatchEvent(new Event('projectLoad'));
                 listenButton.dispatchEvent(new Event('projectLoad'));
             }
