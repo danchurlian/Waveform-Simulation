@@ -211,19 +211,20 @@ def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
 
 
 def load_project_info(project_info: ProjectInfo) -> HTMLString:
-    content: HTMLString = f"""<div>
-    <span></span>
-    <span>"{project_info.title}": {str(project_info.frequencies)}</span>
-    <button 
-        commandfor="load-projects-dialog" 
-        command="close"
-        data-title="{project_info.title}"
-        data-waveform="{project_info.waveform}"
-        data-freqs="{json.dumps(project_info.frequencies)}"
-        onclick="loadProject(event.target)"
-        >
-        Load
-    </button>
+    content: HTMLString = f"""
+    <div class="project-list-item">
+        <span>"{project_info.title}": {str(project_info.frequencies)}</span>
+        <button 
+            class="project-list-item-load"
+            commandfor="load-projects-dialog" 
+            command="close"
+            data-title="{project_info.title}"
+            data-waveform="{project_info.waveform}"
+            data-freqs="{json.dumps(project_info.frequencies)}"
+            onclick="loadProject(event.target)"
+            >
+            Load
+        </button>
     </div>"""
     return content
 

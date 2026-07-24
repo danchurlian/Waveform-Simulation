@@ -133,6 +133,26 @@ eq-label {
     margin-bottom: 0.5rem;
 }
 
+#load-projects-dialog h1 {
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+#project-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.project-list-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.project-list-item-load {
+    margin-left: 0.5rem;
+}
+
 #form-dashboard {
     display: flex;
     flex-direction: row;
