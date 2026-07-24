@@ -109,6 +109,8 @@ eq-label {
     font-weight: bold;
 }
 
+/* -------------------------------------------------------------------------- */
+
 #listen-button {
     display: block;
     margin-top: 0.5rem;
@@ -125,6 +127,20 @@ eq-label {
     background-color: rgb(97, 5, 8);
 }
 
+/* -------------------------------------------------------------------------- */
+
 #open-projects-dialog-button {
     margin-bottom: 0.5rem;
+}
+
+#form-dashboard {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+#save-result {
+    display: flex;
+    align-items: center;
 }

@@ -131,24 +131,26 @@
             </header>
             <div class="left-right-container">
                 <div id="left-side">
-                    <button 
-                        id="open-projects-dialog-button"
-                        hx-get="/projects"
-                        hx-target="#project-list-container"
-                        hx-swap="afterBegin"
-                        command="show-modal" 
-                        commandfor="load-projects-dialog"
-                        >Load projects</button>
+                    <div id="form-dashboard">
+                        <button 
+                            id="open-projects-dialog-button"
+                              hx-get="/projects"
+                              hx-target="#project-list-container"
+                              hx-swap="afterBegin"
+                              command="show-modal" 
+                              commandfor="load-projects-dialog"
+                              >Load projects</button>
 
-                    <button
-                        id="save-project-button"
-                        form="signal-form"
-                        hx-post="/save"
-                        hx-target="#save-result"
-                        hx-swap="afterbegin"
-                        >Save</button>
+                        <button
+                            id="save-project-button"
+                            form="signal-form"
+                            hx-post="/save"
+                            hx-target="#save-result"
+                            hx-swap="afterbegin"
+                            >Save</button>
 
-                    <div id="save-result"></div>
+                        <div id="save-result"></div>
+                    </div>
 
                     <form   id="signal-form"
                             hx-post="/image" 
