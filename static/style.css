@@ -9,9 +9,20 @@ body {
     font-family: Arial, sans-serif
 }
 
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 header {
     background-color: var(--header-color);
     color: white;
+}
+
+main { 
+    flex: 1;
 }
 
 footer {
@@ -21,9 +32,6 @@ footer {
     justify-content: center;
     width: 100vw;
     height: 30px;
-
-    position: absolute;
-    bottom: 0;
 }
 
 .centered-container {
