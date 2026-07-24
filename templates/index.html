@@ -23,6 +23,14 @@
                         finalImageTag.setAttribute("src", imgData);
                     }
                 });
+
+                const saveResultDiv = document.getElementById("save-result");
+                const SAVE_DISPLAY_TIME_MS = 1500;
+                saveResultDiv.addEventListener("htmx:afterSettle", () => {
+                    setTimeout(() => {
+                        saveResultDiv.textContent = "";
+                    }, SAVE_DISPLAY_TIME_MS);
+                })
             });
 
 
@@ -136,8 +144,11 @@
                         id="save-project-button"
                         form="signal-form"
                         hx-post="/save"
-                        hx-swap="afterend"
+                        hx-target="#save-result"
+                        hx-swap="afterbegin"
                         >Save</button>
+
+                    <div id="save-result"></div>
 
                     <form   id="signal-form"
                             hx-post="/image" 
