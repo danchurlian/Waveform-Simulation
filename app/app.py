@@ -240,9 +240,14 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
             Load
         </button>
 
-        <button class="project-list-item-delete">Delete</button>
+        <button class="project-list-item-delete"
+            hx-delete="/projects/{project_info.project_id}"
+            hx-target="closest .project-list-item"
+            hx-swap="outerHTML"
+        >Delete</button>
     </div>"""
     return content
+
 
 
 @app.get("/projects", response_class=HTMLResponse)
@@ -254,6 +259,13 @@ def get_project_list() -> HTMLResponse:
         content = "".join([content, load_project_info(proj)])
 
     return HTMLResponse(content=content, status_code=200)
+
+
+
+@app.delete("/projects/{project_id}")
+def delete_project(project_id: str) -> HTMLResponse:
+    print(f"deleting project {project_id}")
+    return HTMLResponse(content="", status_code=200)
 
 
 # ---------------------------------------------------------------
