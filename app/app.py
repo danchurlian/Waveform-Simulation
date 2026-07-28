@@ -11,6 +11,7 @@ import dotenv
 
 import io
 import base64
+import uuid
 import json
 import latex2mathml.converter
 
@@ -51,13 +52,17 @@ class ProjectInfo:
     frequencies: list[int]
     waveform: str
     title: str
+    project_id: uuid.UUID
 
     def __init__(self, frequencies: list[int] = [],
                  waveform: str = "",
-                 title: str = "Unnamed"):
+                 title: str = "Unnamed",
+                 project_id: uuid.UUID = uuid.uuid4()):
         self.frequencies = frequencies
         self.waveform = waveform
         self.title = title
+        self.project_id = project_id
+
 
     def __str__(self) -> str:
         return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
@@ -135,11 +140,17 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
     res = []
 
     with sql_engine.begin() as conn:
-        query_result = conn.execute(sqlalchemy.text("SELECT frequencies, project_name, waveform FROM project WHERE user_id=1;"))
+        query_result = conn.execute(
+                sqlalchemy.text("SELECT frequencies, project_name, waveform, project_id FROM "
+                                "project WHERE user_id=1;"))
         for row in query_result:
-            res.append(ProjectInfo(frequencies=row.frequencies, waveform=row.waveform, title=row.project_name))
+            res.append(ProjectInfo(frequencies=row.frequencies, 
+                                   waveform=row.waveform,
+                                   title=row.project_name,
+                                   project_id=row.project_id))
 
     return res
+
 
 def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bool:
     res: bool = True
@@ -222,6 +233,7 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
             command="close"
             data-title="{project_info.title}"
             data-waveform="{project_info.waveform}"
+            data-project-id="{project_info.project_id}"
             data-freqs="{json.dumps(project_info.frequencies)}"
             onclick="loadProject(event.target)"
             >
