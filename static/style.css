@@ -155,10 +155,19 @@ eq-label {
 .project-list-item {
     display: flex;
     justify-content: space-between;
+    gap: 3px;
+}
+
+.project-list-item-info {
+    flex: 1;
 }
 
 .project-list-item-load {
     margin-left: 0.5rem;
+}
+
+.project-list-item-delete {
+    background-color: var(--item-delete-color)
 }
 
 #form-dashboard {

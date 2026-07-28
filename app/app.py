@@ -213,7 +213,9 @@ def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
 def load_project_info(project_info: ProjectInfo) -> HTMLString:
     content: HTMLString = f"""
     <div class="project-list-item">
-        <span>"{project_info.title}": {str(project_info.frequencies)}</span>
+        <span class="project-list-item-info">
+            "{project_info.title}": {str(project_info.frequencies)}
+        </span>
         <button 
             class="project-list-item-load"
             commandfor="load-projects-dialog" 
@@ -225,6 +227,8 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
             >
             Load
         </button>
+
+        <button class="project-list-item-delete">Delete</button>
     </div>"""
     return content
 
