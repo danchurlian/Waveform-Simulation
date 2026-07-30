@@ -56,3 +56,8 @@ def test_audio_no_freqs():
         "sig_type": "Sine Wave"
         })
     assert response.status_code != 200
+
+
+def test_invalid_save():
+    response = client.delete("/projects/00000000-0000-0000-0000-000000000000")
+    assert response.status_code == 404

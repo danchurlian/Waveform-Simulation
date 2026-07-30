@@ -264,8 +264,31 @@ def get_project_list() -> HTMLResponse:
 
 @app.delete("/projects/{project_id}")
 def delete_project(project_id: str) -> HTMLResponse:
-    print(f"deleting project {project_id}")
-    return HTMLResponse(content="", status_code=200)
+    where_clause = project_db_table.c.project_id == uuid.UUID(project_id)
+    can_delete: bool = True
+
+    with sql_engine.connect() as conn:
+        # test out the delete statement first before committing
+        delete_stmt = (
+                sqlalchemy.delete(project_db_table)
+                .where(where_clause)
+        )
+        delete_result = conn.execute(delete_stmt)
+
+        if delete_result.rowcount != 1:
+            can_delete = False
+            if delete_result.rowcount > 1:
+                print(f"deleting {project_id} will result in too many"
+                      "entries being removed.")
+            else:
+                print(f"{project_id} not found!")
+
+        if can_delete:
+            conn.commit()
+            
+
+    return HTMLResponse(content="", status_code=200) if can_delete \
+            else HTMLResponse(content="delete failed", status_code=404)
 
 
 # ---------------------------------------------------------------
