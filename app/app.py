@@ -278,8 +278,7 @@ def delete_project(project_id: str) -> HTMLResponse:
         if delete_result.rowcount != 1:
             can_delete = False
             if delete_result.rowcount > 1:
-                print(f"deleting {project_id} will result in too many"
-                      "entries being removed.")
+                print(f"deleting {project_id} will result in too many entries being removed.")
             else:
                 print(f"{project_id} not found!")
 

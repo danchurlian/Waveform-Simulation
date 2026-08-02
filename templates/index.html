@@ -133,6 +133,9 @@
                 <div class="left-right-container">
                     <div id="left-side">
                         <div id="form-dashboard">
+                            <!-- Buttons -->
+                            <button commandfor="login-dialog" command="show-modal">Login</button>
+
                             <button 
                                 id="open-projects-dialog-button"
                                   hx-get="/projects"
@@ -153,6 +156,7 @@
                             <div id="save-result"></div>
                         </div>
 
+                        <!-- Form -->
                         <form   id="signal-form"
                                 hx-post="/image" 
                                 hx-target="#plot-image-load" 
@@ -232,6 +236,8 @@
                     </div>
                 </div>
 
+
+                <!-- Dialogs -->
                 <dialog id="load-projects-dialog">
                     <button commandfor="load-projects-dialog" command="close">Close</button>
                     <h1>Load Projects</h1>
@@ -239,6 +245,21 @@
                     <div id="project-list-container">
                         <!-- show name, freq list, waveform string, load button -->
                     </div>
+                </dialog>
+                <dialog id="login-dialog">
+                    <button commandfor="login-dialog" command="close">Close</button>
+                    <h1>Login </h1>
+                    <form id="login-form" method="dialog">
+                        <div>
+                          <label for="username">Username</label>
+                          <input type="text" name="username"></input> 
+                        </div>
+                        <div>
+                            <label for="password">Password</label>
+                            <input type="password" name="password"></input> 
+                        </div>
+                        <button type="submit" form="login-form">Login</button>
+                    </form>
                 </dialog>
             </main>
             <footer class="centered-container centered-vertical-container">
