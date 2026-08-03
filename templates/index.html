@@ -249,7 +249,10 @@
                 <dialog id="login-dialog">
                     <button commandfor="login-dialog" command="close">Close</button>
                     <h1>Login </h1>
-                    <form id="login-form" method="dialog">
+                    <form id="login-form" 
+                        hx-post="login"
+                        hx-swap="beforeend"
+                    >
                         <div>
                           <label for="username">Username</label>
                           <input type="text" name="username"></input> 
@@ -258,7 +261,13 @@
                             <label for="password">Password</label>
                             <input type="password" name="password"></input> 
                         </div>
-                        <button type="submit" form="login-form">Login</button>
+                        <button type="submit" 
+                            name="useraction" value="login"
+                            >Login</button>
+                        <button type="submit" 
+                            name="useraction" value="create"
+                            >
+                            Create</button>
                     </form>
                 </dialog>
             </main>

@@ -290,8 +290,16 @@ def delete_project(project_id: str) -> HTMLResponse:
             else HTMLResponse(content="delete failed", status_code=404)
 
 
-# ---------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
+
+@app.post("/login")
+def create_account() -> HTMLResponse:
+    print("account login")
+    return HTMLResponse(content="account created", status_code=200)
+
+
+# -----------------------------------------------------------------------------
 
 def get_numpy_data(freq: int, waveform: str):
     ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)

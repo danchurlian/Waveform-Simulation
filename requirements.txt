@@ -8,3 +8,4 @@ latex2mathml
 sqlalchemy
 python-dotenv
 psycopg
+bcrypt
