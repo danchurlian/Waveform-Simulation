@@ -364,15 +364,17 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
                     sqlalchemy.select(user_db_table)
                     .where(user_db_table.c.username == login_form.username)
                     )
-            query_res = conn.execute(user_search_stmt)
-            for row in query_res:
-                if bcrypt.checkpw(login_form.password.encode("utf-8"), row.password.encode("utf-8")):
+            user_row = conn.execute(user_search_stmt).first()
+            if user_row is not None:
+                if bcrypt.checkpw(login_form.password.encode("utf-8"), user_row.password.encode("utf-8")):
                     result = "login success"
                     login_success = True
-                    user_id = row.user_id
-                    break
+                    user_id = user_row.user_id
                 else:
                     result = "login wrong password"
+            else:
+                result = "login username not found"
+
 
 
     # make the response object here 
