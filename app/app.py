@@ -1,6 +1,6 @@
 from types import NoneType
 
-from fastapi import FastAPI, Form 
+from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -149,9 +149,13 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
     res = []
 
     with sql_engine.begin() as conn:
-        query_result = conn.execute(
-                sqlalchemy.text("SELECT frequencies, project_name, waveform, project_id FROM "
-                                "project WHERE user_id=1;"))
+        stmt = (
+                sqlalchemy.select(project_db_table)
+                .where(project_db_table.c.user_id == user_id)
+                )
+        print(stmt)
+
+        query_result = conn.execute(stmt)
         for row in query_result:
             res.append(ProjectInfo(frequencies=row.frequencies, 
                                    waveform=row.waveform,
@@ -260,12 +264,22 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 
 
 @app.get("/projects", response_class=HTMLResponse)
-def get_project_list() -> HTMLResponse:
-    project_list: list[ProjectInfo] = get_project_info_from_database(1)
-    content: HTMLString = ""
+def get_project_list(user_id: Annotated[str, Cookie()]) -> HTMLResponse:
+    user_id_int: int = None
+    try:
+        user_id_int = int(user_id)
+    except ValueError:
+        print(f"This should not happen. {user_id=}")
+        return HTMLResponse(content="failed", status_code=404)
 
-    for proj in project_list:
-        content = "".join([content, load_project_info(proj)])
+    project_list: list[ProjectInfo] = get_project_info_from_database(user_id_int)
+    content: HTMLString = "You have no projects!"
+
+
+    if len(project_list) > 0:
+        content = ""
+        for proj in project_list:
+            content = "".join([content, load_project_info(proj)])
 
     return HTMLResponse(content=content, status_code=200)
 
@@ -353,9 +367,8 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
     response = HTMLResponse(content=result, status_code=200)
 
     if login_success:
-        # set the cookie. This assumes that the username column has a unique constraint
-        # OR use the user id
-        response.set_cookie("userid", str(user_id))
+        # TODO: ues a SESSION ID and make the cookie more secure
+        response.set_cookie("user_id", str(user_id))
         print("Set the cookie")
 
     return response
