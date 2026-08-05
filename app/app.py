@@ -153,7 +153,6 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
                 sqlalchemy.select(project_db_table)
                 .where(project_db_table.c.user_id == user_id)
                 )
-        print(stmt)
 
         query_result = conn.execute(stmt)
         for row in query_result:
@@ -169,20 +168,26 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
     res: bool = True
 
     with sql_engine.begin() as conn:
-        query_result = conn.execute(
+        user_row = conn.execute(
+                    sqlalchemy.select(user_db_table)
+                    .where(user_db_table.c.user_id == user_id)
+                ).first()
+
+        if user_row is None:
+            print(f"no {user_id=} found in database! Please login!")
+            return False
+
+        # check if the project already exists
+        existing_project_row = conn.execute(
                 sqlalchemy.select(project_db_table.c.project_name, project_db_table.c.project_id) \
                         .where(project_db_table.c.project_name == project_info.title \
                                 and project_db_table.c.user_id == user_id
                                )
-                )
+                ).first()
 
         existing_id: int | NoneType = None
-
-        # check if one exists
-        for cur_name, cur_id in query_result:
-            if cur_name == project_info.title:
-                existing_id = cur_id
-                break
+        if existing_project_row is not None:
+            existing_id = existing_project_row.project_id
 
         if existing_id is None:
             # create a new entry 
@@ -216,18 +221,24 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
 
 
 @app.post("/save", response_class=HTMLResponse)
-def on_save(form: Annotated[FrequencyForm, Form()]) -> HTMLResponse:
+def on_save(form: Annotated[FrequencyForm, Form()], user_id: Annotated[str, Cookie()]) -> HTMLResponse:
     freq_list: list[int] = []
     try:
         freq_list = [int(freq_str) for freq_str in form.freq_text]
     except ValueError:
         return HTMLResponse(content="Frequencies must be integers!", status_code=200)
 
+    user_id_int: int = None
+    try:
+        user_id_int = int(user_id)
+    except ValueError:
+        return HTMLResponse(content="Invalid user id cookie", status_code=200)
+
     project_info = ProjectInfo(frequencies=freq_list, 
                                waveform=form.sig_type, 
                                title=form.title)
 
-    save_success: bool = save_project_info_to_database(1, project_info)
+    save_success: bool = save_project_info_to_database(user_id_int, project_info)
     if not save_success:
         return HTMLResponse(content="Save failed!", status_code=200)
     
