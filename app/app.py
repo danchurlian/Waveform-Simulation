@@ -341,21 +341,26 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
         hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
         hashed_pw: str = hashed.decode("utf-8")
         
-        """
-        print("created account")
-        result = "created account"
+        print(f"created account with {login_form.username=} {login_form.password=} {hashed_pw=}")
+        
+        result = "created account failed"
 
         with sql_engine.begin() as conn:
             # enter the password for the user
-            user_search_stmt = (
+            existing_user_row = conn.execute(
                     sqlalchemy.select(user_db_table)
                     .where(user_db_table.c.username == login_form.username)
-                    )
-            print(user_search_stmt)
-
-            # if exists, update the column, ELSE
-            # create a new account
-        """
+                    ).first()
+            if existing_user_row is None:
+                # create the account
+                conn.execute(
+                    sqlalchemy.insert(user_db_table)
+                    .values(username=login_form.username, password=hashed_pw)
+                )
+                result = "created account"
+                login_success = True
+            else:
+                result = f"{login_form.username} already exists!"
 
     else:
         # compare in database
