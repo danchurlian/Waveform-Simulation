@@ -26,10 +26,16 @@
 
                 const saveResultDiv = document.getElementById("save-result");
                 const SAVE_DISPLAY_TIME_MS = 1500;
+                let saveResultDebounce = false;
                 saveResultDiv.addEventListener("htmx:afterSettle", () => {
-                    setTimeout(() => {
-                        saveResultDiv.textContent = "";
-                    }, SAVE_DISPLAY_TIME_MS);
+                    
+                    if (!saveResultDebounce) {
+                        saveResultDebounce = true;
+                        setTimeout(() => {
+                            saveResultDiv.textContent = "";
+                            saveResultDebounce = false;
+                        }, SAVE_DISPLAY_TIME_MS);
+                    }
                 })
             });
 
@@ -150,7 +156,6 @@
                                 form="signal-form"
                                 hx-post="/save"
                                 hx-target="#save-result"
-                                hx-swap="afterbegin"
                                 >Save</button>
 
                             <div id="save-result"></div>
