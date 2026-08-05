@@ -155,11 +155,12 @@ def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
                 )
 
         query_result = conn.execute(stmt)
-        for row in query_result:
-            res.append(ProjectInfo(frequencies=row.frequencies, 
+        res = [ProjectInfo(frequencies=row.frequencies, 
                                    waveform=row.waveform,
                                    title=row.project_name,
-                                   project_id=row.project_id))
+                                   project_id=row.project_id)
+
+               for row in query_result]
 
     return res
 
