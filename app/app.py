@@ -222,7 +222,7 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
 
 
 @app.post("/save", response_class=HTMLResponse)
-def on_save(form: Annotated[FrequencyForm, Form()], user_id: Annotated[str, Cookie()]) -> HTMLResponse:
+def on_save(form: Annotated[FrequencyForm, Form()], user_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
     freq_list: list[int] = []
     try:
         freq_list = [int(freq_str) for freq_str in form.freq_text]
@@ -232,8 +232,8 @@ def on_save(form: Annotated[FrequencyForm, Form()], user_id: Annotated[str, Cook
     user_id_int: int = None
     try:
         user_id_int = int(user_id)
-    except ValueError:
-        return HTMLResponse(content="Invalid user id cookie", status_code=200)
+    except (ValueError, TypeError):
+        return HTMLResponse(content="Please login to save.", status_code=200)
 
     project_info = ProjectInfo(frequencies=freq_list, 
                                waveform=form.sig_type, 
@@ -276,13 +276,13 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 
 
 @app.get("/projects", response_class=HTMLResponse)
-def get_project_list(user_id: Annotated[str, Cookie()]) -> HTMLResponse:
+def get_project_list(user_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
     user_id_int: int = None
     try:
         user_id_int = int(user_id)
-    except ValueError:
+    except (ValueError, TypeError):
         print(f"This should not happen. {user_id=}")
-        return HTMLResponse(content="failed", status_code=404)
+        return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
 
     project_list: list[ProjectInfo] = get_project_info_from_database(user_id_int)
     content: HTMLString = "You have no projects!"
