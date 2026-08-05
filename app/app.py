@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 import sqlalchemy
 import dotenv
+import bcrypt
 
 import io
 import base64
@@ -29,6 +30,7 @@ import matplotlib.pyplot as plt
 env_values = dotenv.dotenv_values(".env")
 sql_engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
 sql_metadata = sqlalchemy.MetaData()
+user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
 project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
 
 app = FastAPI()
@@ -46,6 +48,13 @@ class FrequencyForm(BaseModel):
     freq_slider: int
     sig_type: str
     title: str
+
+
+class LoginForm(BaseModel):
+    username: str
+    # this is the raw password the user enters
+    password: str
+    useraction: str
 
 
 class ProjectInfo:
@@ -294,9 +303,62 @@ def delete_project(project_id: str) -> HTMLResponse:
 
 
 @app.post("/login")
-def create_account() -> HTMLResponse:
-    print("account login")
-    return HTMLResponse(content="account created", status_code=200)
+def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
+    result: str = "logged into account"
+
+    login_success: bool = False
+    user_id: int = None
+
+    if login_form.useraction == "create":
+        # store the hashed password into the database
+        salt = bcrypt.gensalt()
+        hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
+        hashed_pw: str = hashed.decode("utf-8")
+        
+        """
+        print("created account")
+        result = "created account"
+
+        with sql_engine.begin() as conn:
+            # enter the password for the user
+            user_search_stmt = (
+                    sqlalchemy.select(user_db_table)
+                    .where(user_db_table.c.username == login_form.username)
+                    )
+            print(user_search_stmt)
+
+            # if exists, update the column, ELSE
+            # create a new account
+        """
+
+    else:
+        # compare in database
+        with sql_engine.begin() as conn:
+            user_search_stmt = (
+                    sqlalchemy.select(user_db_table)
+                    .where(user_db_table.c.username == login_form.username)
+                    )
+            query_res = conn.execute(user_search_stmt)
+            for row in query_res:
+                if bcrypt.checkpw(login_form.password.encode("utf-8"), row.password.encode("utf-8")):
+                    result = "login success"
+                    login_success = True
+                    user_id = row.user_id
+                    break
+                else:
+                    result = "login wrong password"
+
+
+    # make the response object here 
+    response = HTMLResponse(content=result, status_code=200)
+
+    if login_success:
+        # set the cookie. This assumes that the username column has a unique constraint
+        # OR use the user id
+        response.set_cookie("userid", str(user_id))
+        print("Set the cookie")
+
+    return response
 
 
 # -----------------------------------------------------------------------------
