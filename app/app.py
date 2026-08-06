@@ -330,7 +330,7 @@ def delete_project(project_id: str) -> HTMLResponse:
 
 @app.post("/login")
 def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
-    result: str = "logged into account"
+    result: str = "Login failed."
 
     login_success: bool = False
     user_id: int = None
@@ -343,7 +343,7 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
         
         print(f"created account with {login_form.username=} {login_form.password=} {hashed_pw=}")
         
-        result = "created account failed"
+        result = "Failed to create account"
 
         with sql_engine.begin() as conn:
             # enter the password for the user
@@ -372,13 +372,13 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
             user_row = conn.execute(user_search_stmt).first()
             if user_row is not None:
                 if bcrypt.checkpw(login_form.password.encode("utf-8"), user_row.password.encode("utf-8")):
-                    result = "login success"
+                    result = "Login success."
                     login_success = True
                     user_id = user_row.user_id
                 else:
-                    result = "login wrong password"
+                    result = "Incorrect password."
             else:
-                result = "login username not found"
+                result = "Username does not exist."
 
 
 
