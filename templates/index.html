@@ -263,24 +263,27 @@
                         hx-post="login"
                         hx-target="#login-result"
                     >
-                        <div>
+                        <div class="login-field-container">
                             <label for="username">Username</label>
                             <input type="text" name="username"></input> 
                         </div>
-                        <div>
+
+                        <div class="login-field-container">
                             <label for="password">Password</label>
                             <input type="password" name="password"></input> 
                         </div>
 
                         <div id="login-result"></div>
 
-                        <button type="submit" 
-                            name="useraction" value="login"
-                            >Login</button>
-                        <button type="submit" 
-                            name="useraction" value="create"
-                            >
-                            Create</button>
+                        <div id="login-button-section">
+                            <button type="submit" 
+                                name="useraction" value="login"
+                                >Login</button>
+                            <button type="submit" 
+                                name="useraction" value="create"
+                                >Create</button>
+                        </div>
+
                     </form>
                 </dialog>
             </main>
