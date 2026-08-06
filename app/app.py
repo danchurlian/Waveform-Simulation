@@ -388,7 +388,10 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
     if login_success:
         # TODO: ues a SESSION ID and make the cookie more secure
         response.set_cookie("user_id", str(user_id))
-        print("Set the cookie")
+
+        result += f"<div id='user-label' hx-swap-oob='true'>{login_form.username}</div>"
+        response.body = result.encode("utf-8")
+        response.headers["content-length"] = str(len(response.body))
 
     return response
 
@@ -396,7 +399,8 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
 
 @app.get("/logout")
 def logout():
-    response = HTMLResponse(content="You are now logged out.", status_code=200)
+    responseHTML: HTMLString = "You are now logged out.<div id='user-label' hx-swap-oob='true'>Signed out</div>"
+    response = HTMLResponse(content=responseHTML, status_code=200)
     response.delete_cookie("user_id")
     return response
 
@@ -585,4 +589,6 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
 @app.get("/")
 def index(request: Request):
+    # on refresh if there is a session cookie 
+    # find a way to display the user's name
     return templates.TemplateResponse(request=request, name='index.html')
