@@ -393,6 +393,14 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
     return response
 
 
+
+@app.get("/logout")
+def logout():
+    response = HTMLResponse(content="You are now logged out.", status_code=200)
+    response.delete_cookie("user_id")
+    return response
+
+
 # -----------------------------------------------------------------------------
 
 def get_numpy_data(freq: int, waveform: str):

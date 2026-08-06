@@ -141,6 +141,7 @@
                         <div id="form-dashboard">
                             <!-- Buttons -->
                             <button commandfor="login-dialog" command="show-modal">Login</button>
+                            <button hx-get="/logout" hx-target="#logout-message">Logout</button>
 
                             <button 
                                 id="open-projects-dialog-button"
@@ -159,6 +160,7 @@
                                 >Save</button>
 
                             <div id="save-result"></div>
+                            <div id="logout-message"></div>
                         </div>
 
                         <!-- Form -->
