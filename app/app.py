@@ -416,7 +416,7 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
 
 @app.get("/logout")
 def logout():
-    responseHTML: HTMLString = "You are now logged out.<div id='user-label' hx-swap-oob='true'>Signed out</div>"
+    responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
     response.delete_cookie("user_id")
     return response
