@@ -144,6 +144,23 @@ WAVEFORM_EQS: dict = {
 # ---------------------------------------------------------------
 
 
+# get a username based on the user's id.
+def get_username(user_id: int = None) -> str:
+    result: str = None
+
+    if user_id is not None:
+        # get sql query
+        with sql_engine.begin() as conn:
+            # select username from user_table where user_id = userid
+            row = conn.execute(
+                    sqlalchemy.select(user_db_table)
+                    .where(user_db_table.c.user_id == user_id)).first()
+            if row is not None:
+                result = row.username
+
+    return result
+
+
 def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
     assert user_id is not None, "user id is not given!"
     res = []
@@ -588,7 +605,20 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
 
 @app.get("/")
-def index(request: Request):
+def index(request: Request, user_id: Annotated[str, Cookie()] = None):
     # on refresh if there is a session cookie 
     # find a way to display the user's name
-    return templates.TemplateResponse(request=request, name='index.html')
+    user_id_int: int = None
+    
+    username: str = "Signed out"
+
+    if user_id is not None:
+        try:
+            user_id_int = int(user_id)
+            db_username: str = get_username(user_id_int)
+            if db_username is not None:
+                username: str = db_username
+        except ValueError:
+            pass
+
+    return templates.TemplateResponse(request=request, name='index.html', context={"username": username})
