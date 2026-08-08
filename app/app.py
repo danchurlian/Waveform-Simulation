@@ -12,6 +12,7 @@ import bcrypt
 
 import io
 import base64
+import secrets
 import uuid
 import json
 import latex2mathml.converter
@@ -77,6 +78,13 @@ class ProjectInfo:
         return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
         
 
+# -----------------------------------------------------------------------------
+
+
+SESSION_MAP: dict[str, str] = {}
+
+
+# -----------------------------------------------------------------------------
 
 # Audio generation exception when clicking the listen button with
 # invalid data
@@ -344,6 +352,10 @@ def delete_project(project_id: str) -> HTMLResponse:
 
 # -----------------------------------------------------------------------------
 
+def new_session_id() -> str:
+    session_id = secrets.token_hex(8)
+    return session_id
+
 
 @app.post("/login")
 def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
@@ -404,7 +416,16 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
 
     if login_success:
         # TODO: ues a SESSION ID and make the cookie more secure
+        session_id: str = new_session_id()
+        SESSION_MAP[session_id] = login_form.username
+
         response.set_cookie("user_id", str(user_id))
+        response.set_cookie(
+                "session_id", 
+                session_id, 
+                httponly=True, 
+                secure=True, 
+                )
 
         result += f"<div id='user-label' hx-swap-oob='true'>{login_form.username}</div>"
         response.body = result.encode("utf-8")
@@ -415,10 +436,15 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
 
 
 @app.get("/logout")
-def logout():
+def logout(session_id: Annotated[str, Cookie()] = None):
+    if session_id is not None and session_id in SESSION_MAP:
+        del SESSION_MAP[session_id]
+
+
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
     response.delete_cookie("user_id")
+    response.delete_cookie("session_id")
     return response
 
 
