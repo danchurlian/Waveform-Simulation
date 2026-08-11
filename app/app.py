@@ -160,22 +160,21 @@ WAVEFORM_EQS: dict = {
 
 
 def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
-    assert user_id is not None, "user id is not given!"
     res = []
+    if user_id is not None:
+        with sql_engine.begin() as conn:
+            stmt = (
+                    sqlalchemy.select(project_db_table)
+                    .where(project_db_table.c.user_id == user_id)
+                    )
 
-    with sql_engine.begin() as conn:
-        stmt = (
-                sqlalchemy.select(project_db_table)
-                .where(project_db_table.c.user_id == user_id)
-                )
+            query_result = conn.execute(stmt)
+            res = [ProjectInfo(frequencies=row.frequencies, 
+                                       waveform=row.waveform,
+                                       title=row.project_name,
+                                       project_id=row.project_id)
 
-        query_result = conn.execute(stmt)
-        res = [ProjectInfo(frequencies=row.frequencies, 
-                                   waveform=row.waveform,
-                                   title=row.project_name,
-                                   project_id=row.project_id)
-
-               for row in query_result]
+                   for row in query_result]
 
     return res
 
@@ -237,24 +236,23 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
 
 
 @app.post("/save", response_class=HTMLResponse)
-def on_save(form: Annotated[FrequencyForm, Form()], user_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
+def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     freq_list: list[int] = []
     try:
         freq_list = [int(freq_str) for freq_str in form.freq_text]
     except ValueError:
         return HTMLResponse(content="Frequencies must be integers!", status_code=200)
 
-    user_id_int: int = None
-    try:
-        user_id_int = int(user_id)
-    except (ValueError, TypeError):
+    session_info = SESSION_MAP.get(session_id)
+    user_id: int | None = session_info.user_id if session_info is not None else None
+    if user_id is None:
         return HTMLResponse(content="Please login to save.", status_code=200)
 
     project_info = ProjectInfo(frequencies=freq_list, 
                                waveform=form.sig_type, 
                                title=form.title)
 
-    save_success: bool = save_project_info_to_database(user_id_int, project_info)
+    save_success: bool = save_project_info_to_database(user_id, project_info)
     if not save_success:
         return HTMLResponse(content="Save failed!", status_code=200)
     
@@ -291,17 +289,14 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 
 
 @app.get("/projects", response_class=HTMLResponse)
-def get_project_list(user_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
-    user_id_int: int = None
-    try:
-        user_id_int = int(user_id)
-    except (ValueError, TypeError):
-        print(f"This should not happen. {user_id=}")
+def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
+    if session_id is None:
         return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
 
-    project_list: list[ProjectInfo] = get_project_info_from_database(user_id_int)
-    content: HTMLString = "You have no projects!"
+    user_id = SESSION_MAP.get(session_id).user_id if session_id in SESSION_MAP else None
 
+    project_list: list[ProjectInfo] = get_project_info_from_database(user_id)
+    content: HTMLString = "You have no projects!"
 
     if len(project_list) > 0:
         content = ""
@@ -348,7 +343,7 @@ def new_session_id() -> str:
 
 
 @app.post("/login")
-def create_account(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
+def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
 
     login_success: bool = False
@@ -412,7 +407,6 @@ def create_account(login_form: Annotated[LoginForm, Form()], session_id: Annotat
         session_id = new_session_id()
         SESSION_MAP[session_id] = SessionInfo(username=login_form.username, user_id=user_id)
 
-        response.set_cookie("user_id", str(user_id))
         response.set_cookie(
                 "session_id", 
                 session_id, 
@@ -429,7 +423,7 @@ def create_account(login_form: Annotated[LoginForm, Form()], session_id: Annotat
 
 
 @app.get("/logout")
-def logout(session_id: Annotated[str, Cookie()] = None):
+def logout(session_id: Annotated[str | None, Cookie()] = None):
     if session_id is not None and session_id in SESSION_MAP:
         del SESSION_MAP[session_id]
 
@@ -623,11 +617,13 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
 
 @app.get("/")
-def index(request: Request, session_id: Annotated[str, Cookie()] = None):
+def index(request: Request, session_id: Annotated[str | None, Cookie()] = None):
     # display the user's name at the top of the website
-    session_info = SESSION_MAP.get(session_id)
-    username: str = session_info.username if session_info is not None \
-        else "Signed out"
+    username: str = "Signed out"
+
+    if session_id is not None and session_id in SESSION_MAP:
+        session_info = SESSION_MAP.get(session_id)
+        username = session_info.username
 
     return templates.TemplateResponse(
             request=request, 
