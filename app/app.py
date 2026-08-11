@@ -19,6 +19,7 @@ import latex2mathml.converter
 
 from typing_extensions import Annotated
 from pydantic import BaseModel
+from dataclasses import dataclass
 
 import numpy as np
 from scipy.io import wavfile
@@ -80,8 +81,14 @@ class ProjectInfo:
 
 # -----------------------------------------------------------------------------
 
+@dataclass(frozen=True)
+class SessionInfo:
+    username: str
+    user_id: int
 
-SESSION_MAP: dict[str, str] = {}
+
+# TODO: do we want to store the user id, or the username? Maybe store both
+SESSION_MAP: dict[str, SessionInfo] = {}
 
 
 # -----------------------------------------------------------------------------
@@ -150,23 +157,6 @@ WAVEFORM_EQS: dict = {
 
 
 # ---------------------------------------------------------------
-
-
-# get a username based on the user's id.
-def get_username(user_id: int = None) -> str:
-    result: str = None
-
-    if user_id is not None:
-        # get sql query
-        with sql_engine.begin() as conn:
-            # select username from user_table where user_id = userid
-            row = conn.execute(
-                    sqlalchemy.select(user_db_table)
-                    .where(user_db_table.c.user_id == user_id)).first()
-            if row is not None:
-                result = row.username
-
-    return result
 
 
 def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
@@ -358,7 +348,7 @@ def new_session_id() -> str:
 
 
 @app.post("/login")
-def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
+def create_account(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
 
     login_success: bool = False
@@ -415,9 +405,12 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
     response = HTMLResponse(content=result, status_code=200)
 
     if login_success:
-        # TODO: ues a SESSION ID and make the cookie more secure
-        session_id: str = new_session_id()
-        SESSION_MAP[session_id] = login_form.username
+        # delete the old session cookie and remove it from the session table
+        if session_id is not None and session_id in SESSION_MAP:
+            del SESSION_MAP[session_id]
+
+        session_id = new_session_id()
+        SESSION_MAP[session_id] = SessionInfo(username=login_form.username, user_id=user_id)
 
         response.set_cookie("user_id", str(user_id))
         response.set_cookie(
@@ -439,7 +432,6 @@ def create_account(login_form: Annotated[LoginForm, Form()]) -> HTMLResponse:
 def logout(session_id: Annotated[str, Cookie()] = None):
     if session_id is not None and session_id in SESSION_MAP:
         del SESSION_MAP[session_id]
-
 
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
@@ -631,20 +623,13 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 
 
 @app.get("/")
-def index(request: Request, user_id: Annotated[str, Cookie()] = None):
-    # on refresh if there is a session cookie 
-    # find a way to display the user's name
-    user_id_int: int = None
-    
-    username: str = "Signed out"
+def index(request: Request, session_id: Annotated[str, Cookie()] = None):
+    # display the user's name at the top of the website
+    session_info = SESSION_MAP.get(session_id)
+    username: str = session_info.username if session_info is not None \
+        else "Signed out"
 
-    if user_id is not None:
-        try:
-            user_id_int = int(user_id)
-            db_username: str = get_username(user_id_int)
-            if db_username is not None:
-                username: str = db_username
-        except ValueError:
-            pass
-
-    return templates.TemplateResponse(request=request, name='index.html', context={"username": username})
+    return templates.TemplateResponse(
+            request=request, 
+            name='index.html', 
+            context={"username": username})
