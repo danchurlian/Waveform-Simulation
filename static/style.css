@@ -16,6 +16,7 @@ body {
     min-height: 100vh;
 }
 
+
 header {
     background-color: var(--header-color);
     color: white;
@@ -24,9 +25,11 @@ header {
     padding: 0 1.5rem;
 }
 
+
 main { 
     flex: 1;
 }
+
 
 footer {
     background-color: var(--header-color);
@@ -79,9 +82,11 @@ dialog {
     overflow: hidden;
 }
 
+
 #left-side {
     padding: 1rem;
 }
+
 
 #graph-data {
     width: 700px;
@@ -90,6 +95,7 @@ dialog {
 
 
 /* header ------------------------------------------------------------------- */
+
 
 header h1 {
     flex: 4
@@ -105,9 +111,11 @@ header h1 {
     align-items: stretch;
 }
 
+
 #login-nav-container * {
     flex: 1 0 5vw;
 }
+
 
 #login-nav-container button {
     height: auto;
@@ -126,6 +134,7 @@ header h1 {
 
 /* Left side -------------------------- */
 
+
 #equation-list {
     margin: 0;
 }
@@ -138,6 +147,7 @@ form input {
     width: 11rem;
 }
 
+
 .wave-form-item {
     display: flex;
     flex-direction: row;
@@ -146,6 +156,7 @@ form input {
 
     margin: 5px;
 }
+
 
 button {
     background-color: var(--header-color);
@@ -159,6 +170,7 @@ button {
     cursor: pointer;
     transition: background-color 0.15s
 }
+
 
 button:hover {
     background-color: darkblue;
@@ -176,6 +188,7 @@ eq-label {
 
 
 /* -------------------------------------------------------------------------- */
+
 
 #listen-button {
     display: block;
@@ -195,7 +208,9 @@ eq-label {
     background-color: rgb(97, 5, 8);
 }
 
+
 /* -------------------------------------------------------------------------- */
+
 
 #open-projects-dialog-button {
     margin-bottom: 0.5rem;
@@ -260,6 +275,7 @@ eq-label {
     gap: 20px;
     margin: .5rem 0;
 }
+
 
 .login-field-container label {
     height: 2rem;
