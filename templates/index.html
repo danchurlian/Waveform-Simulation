@@ -132,33 +132,35 @@
     </head>
     <body hx-ext="response-targets">
         <div class="page-container">
-            <header class="centered-container">
+            <header>
                 <h1>Waveform Simulation</h1>
+                <div id="login-nav-container">
+                    <div id="user-label">{{ username }}</div>
+                    <button commandfor="login-dialog" command="show-modal">Login</button>
+                    <button hx-get="/logout" hx-target="#logout-message">Logout</button>
+                </div>
             </header>
             <main>
-              <div id="user-label">{{ username }}</div>
                 <div class="left-right-container">
                     <div id="left-side">
                         <div id="form-dashboard">
                             <!-- Buttons -->
-                            <button commandfor="login-dialog" command="show-modal">Login</button>
-                            <button hx-get="/logout" hx-target="#logout-message">Logout</button>
 
                             <button 
                                 id="open-projects-dialog-button"
-                                  hx-get="/projects"
-                                  hx-target="#project-list-container"
-                                  hx-swap="afterBegin"
-                                  command="show-modal" 
-                                  commandfor="load-projects-dialog"
-                                  >Load projects</button>
+                                hx-get="/projects"
+                                hx-target="#project-list-container"
+                                hx-swap="afterBegin"
+                                command="show-modal" 
+                                commandfor="load-projects-dialog">
+                                Load projects</button>
 
                             <button
                                 id="save-project-button"
                                 form="signal-form"
                                 hx-post="/save"
-                                hx-target="#save-result"
-                                >Save</button>
+                                hx-target="#save-result">
+                                Save</button>
 
                             <div id="save-result"></div>
                             <div id="logout-message"></div>

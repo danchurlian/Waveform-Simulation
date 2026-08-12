@@ -19,6 +19,9 @@ body {
 header {
     background-color: var(--header-color);
     color: white;
+
+    display: flex;
+    padding: 0 1.5rem;
 }
 
 main { 
@@ -66,6 +69,41 @@ footer {
 #graph-data {
     width: 700px;
     height: 520px;
+}
+
+
+/* header ------------------------------------------------------------------- */
+
+header h1 {
+    flex: 4
+}
+
+
+#login-nav-container {
+    display: flex;
+
+    flex: 1;
+    justify-content: flex-end;
+
+    align-items: stretch;
+}
+
+#login-nav-container * {
+    flex: 1 0 5vw;
+}
+
+#login-nav-container button {
+    height: auto;
+    border-radius: 0;
+}
+
+
+#user-label {
+    font-size: 1.2rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 
