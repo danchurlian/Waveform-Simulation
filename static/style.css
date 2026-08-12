@@ -37,15 +37,32 @@ footer {
     height: 30px;
 }
 
+
+/* -------------------------------------------------------------------------- */
+
+
+dialog {
+    border: 0;
+    border-radius: 8px;
+    border-block-start: 4px solid #5768d4;
+    border-inline-start: 4px solid darkblue;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 .centered-container {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+
 .centered-vertical-container {
     justify-content: center;
 }
+
 
 .left-right-container {
     display: flex;
@@ -147,13 +164,16 @@ button:hover {
     background-color: darkblue;
 }
 
+
 form select {
     height: 2rem;
 }
 
+
 eq-label {
     font-weight: bold;
 }
+
 
 /* -------------------------------------------------------------------------- */
 
@@ -162,9 +182,11 @@ eq-label {
     margin-top: 0.5rem;
 }
 
+
 #audio-output {
     margin-top: 0.5rem;
 }
+
 
 .waveform-item-delete {
     background-color: var(--item-delete-color);
@@ -179,10 +201,12 @@ eq-label {
     margin-bottom: 0.5rem;
 }
 
+
 #load-projects-dialog h1 {
     text-align: center;
     margin: 0.5rem 0;
 }
+
 
 #project-list-container {
     display: flex;
@@ -190,23 +214,28 @@ eq-label {
     gap: 0.25rem;
 }
 
+
 .project-list-item {
     display: flex;
     justify-content: space-between;
     gap: 3px;
 }
 
+
 .project-list-item-info {
     flex: 1;
 }
+
 
 .project-list-item-load {
     margin-left: 0.5rem;
 }
 
+
 .project-list-item-delete {
     background-color: var(--item-delete-color)
 }
+
 
 #form-dashboard {
     display: flex;
@@ -214,6 +243,7 @@ eq-label {
     gap: 0.25rem;
     width: 100%;
 }
+
 
 #save-result {
     display: flex;
