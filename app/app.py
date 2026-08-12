@@ -87,7 +87,6 @@ class SessionInfo:
     user_id: int
 
 
-# TODO: do we want to store the user id, or the username? Maybe store both
 SESSION_MAP: dict[str, SessionInfo] = {}
 
 

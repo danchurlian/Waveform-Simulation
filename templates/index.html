@@ -173,8 +173,7 @@
                                     input[event.target.matches('.freq-slider')] from:body,
                                     input from:#sig-type-select,
                                     submit throttle:100ms,
-                                    projectLoad",
-                                >
+                                    projectLoad">
 
                             <input id="project-name-input"
                                 type="text"
@@ -182,8 +181,7 @@
                                 placeholder="Project Title..."
                                 autocomplete="off"
                                 required="true"
-                                value="Untitled Project"
-                                ></input>
+                                value="Untitled Project" />
 
                             <select id="sig-type-select" name="sig_type">
                                 <option>Sine Wave</option>
@@ -203,8 +201,7 @@
                                     placeholder="Frequency (Hz)"
                                     required="true"
                                     value="440"
-                                    oninput="document.getElementById('freq-slider').value = this.value;"
-                                    />
+                                    oninput="document.getElementById('freq-slider').value = this.value;"/>
                                 <input 
                                     id="freq-slider"
                                     class="freq-slider"
@@ -214,8 +211,7 @@
                                     max="1000" 
                                     step="10"
                                     value="440"
-                                    oninput="document.getElementById('freq-text').value = this.value;"
-                                    />
+                                    oninput="document.getElementById('freq-text').value = this.value;"/>
                             </div>
                         </form>
 
@@ -261,16 +257,16 @@
                     <h1>Login </h1>
                     <form id="login-form" 
                         hx-post="login"
-                        hx-target="#login-result"
-                    >
+                        hx-target="#login-result">
+
                         <div class="login-field-container">
                             <label for="username">Username</label>
-                            <input type="text" name="username"></input> 
+                            <input type="text" name="username" />
                         </div>
 
                         <div class="login-field-container">
                             <label for="password">Password</label>
-                            <input type="password" name="password"></input> 
+                            <input type="password" name="password" />
                         </div>
 
                         <div id="login-result"></div>
