@@ -269,6 +269,11 @@ eq-label {
 }
 
 
+#project-name-input {
+    width: 20rem;
+}
+
+
 #save-result {
     display: flex;
     align-items: center;
