@@ -188,7 +188,6 @@ def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bo
                 ).first()
 
         if user_row is None:
-            print(f"no {user_id=} found in database! Please login!")
             return False
 
         # check if the project already exists
@@ -346,15 +345,13 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     result: str = "Login failed."
 
     login_success: bool = False
-    user_id: int = None
+    user_id: int | None = None
 
     if login_form.useraction == "create":
         # store the hashed password into the database
         salt = bcrypt.gensalt()
         hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
         hashed_pw: str = hashed.decode("utf-8")
-        
-        print(f"created account with {login_form.username=} {login_form.password=} {hashed_pw=}")
         
         result = "Failed to create account"
 
