@@ -1,6 +1,8 @@
 :root {
-    --header-color: rgb(85, 96, 255);
+    --header-color: rgb(45, 55, 138);
     --item-delete-color: rgb(230, 41, 47);
+    --item-delete-hover-color: rgb(125, 15, 15);
+    --default-button-color: rgb(78, 89, 237);
 }
 
 
@@ -118,8 +120,12 @@ header h1 {
 
 
 #login-nav-container button {
+    background-color: var(--header-color);
     height: auto;
     border-radius: 0;
+}
+#login-nav-container button:hover {
+    background-color: rgb(76, 87, 181);
 }
 
 
@@ -159,7 +165,7 @@ form input {
 
 
 button {
-    background-color: var(--header-color);
+    background-color: var(--default-button-color);
     color: white;    
     font-size: 1.2rem;
 
@@ -205,7 +211,7 @@ eq-label {
     background-color: var(--item-delete-color);
 }
 .waveform-item-delete:hover {
-    background-color: rgb(97, 5, 8);
+    background-color: var(--item-delete-hover-color);
 }
 
 
@@ -249,6 +255,9 @@ eq-label {
 
 .project-list-item-delete {
     background-color: var(--item-delete-color)
+}
+.project-list-item-delete:hover {
+    background-color: var(--item-delete-hover-color)
 }
 
 
