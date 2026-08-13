@@ -23,10 +23,25 @@
                         finalImageTag.setAttribute("src", imgData);
                     }
                 });
+
+                const saveResultDiv = document.getElementById("save-result");
+                const SAVE_DISPLAY_TIME_MS = 1500;
+                let saveResultDebounce = false;
+                saveResultDiv.addEventListener("htmx:afterSettle", () => {
+                    
+                    if (!saveResultDebounce) {
+                        saveResultDebounce = true;
+                        setTimeout(() => {
+                            saveResultDiv.textContent = "";
+                            saveResultDebounce = false;
+                        }, SAVE_DISPLAY_TIME_MS);
+                    }
+                })
             });
 
 
-            const addWave = (form) => {
+            const addWave = (form, frequency) => {
+                const parser = new DOMParser();
                 const newTextField = `<input 
                             class="freq-text-field"
                             name="freq_text" 
@@ -37,6 +52,8 @@
                             required="true"
                             />`;
 
+                const fieldElement = parser.parseFromString(newTextField, "text/html").body.firstElementChild;
+                
                 const newSliderField = `<input 
                             class="freq-slider"
                             name="freq_slider" 
@@ -46,6 +63,12 @@
                             step="10"
                             oninput="event.target.parentElement.querySelector('.freq-text-field').value = this.value;"
                             />`;
+                const sliderElement = parser.parseFromString(newSliderField, "text/html").body.firstElementChild;
+
+                if (frequency) {
+                    fieldElement.value = frequency;
+                    sliderElement.value = frequency;
+                }
               
                 // create a delete button for the item
                 const deleteButton = document.createElement("button");
@@ -62,89 +85,210 @@
                 // Create the wave object
                 const waveFormObj = document.createElement("div");
                 waveFormObj.classList.add("wave-form-item");
-                waveFormObj.insertAdjacentHTML("beforeend", newTextField);
-                waveFormObj.insertAdjacentHTML("beforeend", newSliderField);
+                waveFormObj.appendChild(fieldElement);
+                waveFormObj.appendChild(sliderElement);
                 waveFormObj.appendChild(deleteButton);
 
                 form.appendChild(waveFormObj);
             }
+
+
+            const loadProject = (target) => {
+                const freqList = JSON.parse(target.dataset.freqs);
+                const titleStr = target.dataset.title;
+                const waveformStr = target.dataset.waveform;
+
+                const form = document.getElementById("signal-form");
+                const waveformSelect = document.getElementById("sig-type-select");
+                const listenButton = document.getElementById("listen-button");
+                const titleInput = document.getElementById("project-name-input")
+                
+                // delete the old extra waveform items
+                waveformItems = document.querySelectorAll(".wave-form-item");
+                waveformItems.forEach((item) => {
+                    if (item.id != "wave-form-item")
+                        item.remove();
+                })
+
+                for (let i = 0; i < freqList.length; i++) {
+                    const freq = freqList[i];
+                    if (i == 0) {
+                        const firstFreqText = document.getElementById("freq-text");
+                        const firstFreqSlider = document.getElementById("freq-slider");
+
+                        firstFreqText.value = freq;
+                        firstFreqSlider.value = freq;
+                    } else {
+                        addWave(form, freq);
+                    }
+                }
+
+                waveformSelect.value = waveformStr;
+                titleInput.value = titleStr;
+                form.dispatchEvent(new Event('projectLoad'));
+                listenButton.dispatchEvent(new Event('projectLoad'));
+            }
         </script>
     </head>
     <body hx-ext="response-targets">
-        <main>
-            <header class="centered-container">
+        <div class="page-container">
+            <header>
                 <h1>Waveform Simulation</h1>
+                <div id="login-nav-container">
+                    <div id="user-label">{{ username }}</div>
+                    <button commandfor="login-dialog" command="show-modal">Login</button>
+                    <button hx-get="/logout" hx-target="#logout-message">Logout</button>
+                </div>
             </header>
-            <div class="left-right-container">
-                <div id="left-side">
-                    <form   id="signal-form"
-                            hx-post="/image" 
-                            hx-target="#plot-image-load" 
-                            hx-swap="outerHTML"
-                            hx-trigger="
-                                input[event.target.matches('.freq-slider')] from:body,
-                                input from:#sig-type-select,
-                                submit throttle:100ms"
-                            >
+            <main>
+                <div class="left-right-container">
+                    <div id="left-side">
+                        <div id="form-dashboard">
+                            <!-- Buttons -->
 
-                        <select id="sig-type-select" name="sig_type">
-                            <option>Sine Wave</option>
-                            <option>Sawtooth Wave</option>
-                            <option>Triangle Wave</option>
-                            <option>Square Wave</option>
-                        </select>
+                            <button 
+                                id="open-projects-dialog-button"
+                                hx-get="/projects"
+                                hx-target="#project-list-container"
+                                hx-swap="afterBegin"
+                                command="show-modal" 
+                                commandfor="load-projects-dialog">
+                                Load projects</button>
 
-                        <div id="wave-form-item" class="wave-form-item">
-                            <input 
-                                id="freq-text"
-                                class="freq-text-field"
-                                name="freq_text" 
-                                type="number" 
-                                autofocus="true" 
-                                autocomplete="off"  
-                                placeholder="Frequency (Hz)"
-                                required="true"
-                                oninput="document.getElementById('freq-slider').value = this.value;"
-                                />
-                            <input 
-                                id="freq-slider"
-                                class="freq-slider"
-                                name="freq_slider" 
-                                type="range" 
-                                min="0" 
-                                max="1000" 
-                                step="10"
-                                oninput="document.getElementById('freq-text').value = this.value;"
-                                />
+                            <button
+                                id="save-project-button"
+                                form="signal-form"
+                                hx-post="/save"
+                                hx-target="#save-result">
+                                Save</button>
+
+                            <div id="save-result"></div>
+                            <div id="logout-message"></div>
                         </div>
-                    </form>
 
-                    <button type="submit" form="signal-form">Submit</button>
-                    <button id='add-wave-button' onclick='addWave(document.querySelector("form"))'>Add wave</button>
-                    
-                    <div id="error-message"></div>
-                    <ul id="equation-list">
-                    </ul>
-                    <div id="listen-container">
-                        <button id="listen-button" 
-                            form="signal-form"
-                            hx-post="/audio"
-                            hx-target="#audio-output"
-                            hx-target-400="#audio-output"
-                            hx-swap="outerHTML" >
-                            Listen</button>
-                        <audio id="audio-output"></audio>
-                        <div id="audio-output-error"></div>
+                        <!-- Form -->
+                        <form   id="signal-form"
+                                hx-post="/image" 
+                                hx-target="#plot-image-load" 
+                                hx-swap="outerHTML"
+                                hx-trigger="
+                                    input[event.target.matches('.freq-slider')] from:body,
+                                    input from:#sig-type-select,
+                                    submit throttle:100ms,
+                                    projectLoad">
+
+                            <input id="project-name-input"
+                                type="text"
+                                name="title"
+                                placeholder="Project Title..."
+                                autocomplete="off"
+                                required="true"
+                                maxlength="50"
+                                value="Untitled Project" />
+
+                            <select id="sig-type-select" name="sig_type">
+                                <option>Sine Wave</option>
+                                <option>Sawtooth Wave</option>
+                                <option>Triangle Wave</option>
+                                <option>Square Wave</option>
+                            </select>
+
+                            <div id="wave-form-item" class="wave-form-item">
+                                <input 
+                                    id="freq-text"
+                                    class="freq-text-field"
+                                    name="freq_text" 
+                                    type="number" 
+                                    autofocus="true" 
+                                    autocomplete="off"  
+                                    placeholder="Frequency (Hz)"
+                                    required="true"
+                                    value="440"
+                                    oninput="document.getElementById('freq-slider').value = this.value;"/>
+                                <input 
+                                    id="freq-slider"
+                                    class="freq-slider"
+                                    name="freq_slider" 
+                                    type="range" 
+                                    min="0" 
+                                    max="1000" 
+                                    step="10"
+                                    value="440"
+                                    oninput="document.getElementById('freq-text').value = this.value;"/>
+                            </div>
+                        </form>
+
+                        <button type="submit" form="signal-form">Submit</button>
+                        <button id='add-wave-button' onclick='addWave(document.querySelector("form"), 440)'>Add wave</button>
+                        
+                        <div id="error-message"></div>
+                        <ul id="equation-list">
+                        </ul>
+                        <div id="listen-container">
+                            <button id="listen-button" 
+                                form="signal-form"
+                                hx-post="/audio"
+                                hx-target="#audio-output"
+                                hx-target-400="#audio-output"
+                                hx-swap="outerHTML"
+                                hx-trigger="click, projectLoad">
+                                Listen</button>
+                            <audio id="audio-output"></audio>
+                            <div id="audio-output-error"></div>
+                        </div>
+                    </div>
+                    <div class="centered-container" id="graph-data">
+                        <img id="plot-image" style="padding: 1rem" />
+                        <img id="plot-image-load" style="display:none" />
                     </div>
                 </div>
-                <div class="centered-container" id="graph-data">
-                    <img id="plot-image" style="padding: 1rem" />
-                    <img id="plot-image-load" style="display:none" />
-                </div>
-            </div>
-        </main>
-        <footer class="centered-container centered-vertical-container">
-            Copyright (c) 2026 by Daniel Chu. All rights reserved.
-        </footer>
+
+
+                <!-- Dialogs -->
+                <dialog id="load-projects-dialog">
+                    <button commandfor="load-projects-dialog" command="close">Close</button>
+                    <h1>Load Projects</h1>
+
+                    <div id="project-list-container">
+                        <!-- show name, freq list, waveform string, load button -->
+                    </div>
+                </dialog>
+
+
+                <dialog id="login-dialog">
+                    <button commandfor="login-dialog" command="close">Close</button>
+                    <h1>Login </h1>
+                    <form id="login-form" 
+                        hx-post="login"
+                        hx-target="#login-result">
+
+                        <div class="login-field-container">
+                            <label for="username">Username</label>
+                            <input type="text" name="username" />
+                        </div>
+
+                        <div class="login-field-container">
+                            <label for="password">Password</label>
+                            <input type="password" name="password" />
+                        </div>
+
+                        <div id="login-result"></div>
+
+                        <div id="login-button-section">
+                            <button type="submit" 
+                                name="useraction" value="login"
+                                >Login</button>
+                            <button type="submit" 
+                                name="useraction" value="create"
+                                >Create</button>
+                        </div>
+
+                    </form>
+                </dialog>
+            </main>
+            <footer class="centered-container centered-vertical-container">
+                Copyright (c) 2026 by Daniel Chu. All rights reserved.
+            </footer>
+        </div> 
     </body>
 </html>

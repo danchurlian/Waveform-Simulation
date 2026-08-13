@@ -1,6 +1,8 @@
 :root {
-    --header-color: rgb(85, 96, 255);
+    --header-color: rgb(45, 55, 138);
     --item-delete-color: rgb(230, 41, 47);
+    --item-delete-hover-color: rgb(125, 15, 15);
+    --default-button-color: rgb(78, 89, 237);
 }
 
 
@@ -9,10 +11,27 @@ body {
     font-family: Arial, sans-serif
 }
 
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+
 header {
     background-color: var(--header-color);
     color: white;
+
+    display: flex;
+    padding: 0 1.5rem;
 }
+
+
+main { 
+    flex: 1;
+}
+
 
 footer {
     background-color: var(--header-color);
@@ -21,10 +40,22 @@ footer {
     justify-content: center;
     width: 100vw;
     height: 30px;
-
-    position: absolute;
-    bottom: 0;
 }
+
+
+/* -------------------------------------------------------------------------- */
+
+
+dialog {
+    border: 0;
+    border-radius: 8px;
+    border-block-start: 4px solid #5768d4;
+    border-inline-start: 4px solid darkblue;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
 
 .centered-container {
     display: flex;
@@ -32,9 +63,11 @@ footer {
     align-items: center;
 }
 
+
 .centered-vertical-container {
     justify-content: center;
 }
+
 
 .left-right-container {
     display: flex;
@@ -51,9 +84,11 @@ footer {
     overflow: hidden;
 }
 
+
 #left-side {
     padding: 1rem;
 }
+
 
 #graph-data {
     width: 700px;
@@ -61,7 +96,50 @@ footer {
 }
 
 
+/* header ------------------------------------------------------------------- */
+
+
+header h1 {
+    flex: 4
+}
+
+
+#login-nav-container {
+    display: flex;
+
+    flex: 1;
+    justify-content: flex-end;
+
+    align-items: stretch;
+}
+
+
+#login-nav-container * {
+    flex: 1 0 5vw;
+}
+
+
+#login-nav-container button {
+    background-color: var(--header-color);
+    height: auto;
+    border-radius: 0;
+}
+#login-nav-container button:hover {
+    background-color: rgb(76, 87, 181);
+}
+
+
+#user-label {
+    font-size: 1.2rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
 /* Left side -------------------------- */
+
 
 #equation-list {
     margin: 0;
@@ -75,17 +153,19 @@ form input {
     width: 11rem;
 }
 
+
 .wave-form-item {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 5px;
 
-    margin: 5px;
+    margin: 5px 0;
 }
 
+
 button {
-    background-color: var(--header-color);
+    background-color: var(--default-button-color);
     color: white;    
     font-size: 1.2rem;
 
@@ -97,26 +177,126 @@ button {
     transition: background-color 0.15s
 }
 
+
 button:hover {
     background-color: darkblue;
 }
+
 
 form select {
     height: 2rem;
 }
 
+
 eq-label {
     font-weight: bold;
 }
 
+
+/* -------------------------------------------------------------------------- */
+
+
 #listen-button {
     display: block;
-    margin: 1rem 0;
+    margin-top: 0.5rem;
 }
+
+
+#audio-output {
+    margin-top: 0.5rem;
+}
+
 
 .waveform-item-delete {
     background-color: var(--item-delete-color);
 }
 .waveform-item-delete:hover {
-    background-color: rgb(97, 5, 8);
+    background-color: var(--item-delete-hover-color);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+#open-projects-dialog-button {
+    margin-bottom: 0.5rem;
+}
+
+
+#load-projects-dialog h1 {
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+
+#project-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+
+.project-list-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 3px;
+}
+
+
+.project-list-item-info {
+    flex: 1;
+}
+
+
+.project-list-item-load {
+    margin-left: 0.5rem;
+}
+
+
+.project-list-item-delete {
+    background-color: var(--item-delete-color)
+}
+.project-list-item-delete:hover {
+    background-color: var(--item-delete-hover-color)
+}
+
+
+#form-dashboard {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+
+#project-name-input {
+    width: 20rem;
+}
+
+
+#save-result {
+    display: flex;
+    align-items: center;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+.login-field-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin: .5rem 0;
+}
+
+
+.login-field-container label {
+    height: 2rem;
+    line-height: 2rem;
+}
+
+
+#login-button-section {
+    margin-top: 1rem;
 }
