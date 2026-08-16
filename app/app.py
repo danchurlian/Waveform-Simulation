@@ -11,6 +11,7 @@ import dotenv
 import bcrypt
 
 import io
+import os
 import base64
 import secrets
 import uuid
@@ -29,8 +30,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-env_values = dotenv.dotenv_values(".env")
-sql_engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
+# load the database
+dotenv.load_dotenv()
+
+sql_engine = sqlalchemy.create_engine(os.getenv("DATABASE_URL"))
 sql_metadata = sqlalchemy.MetaData()
 user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
 project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
