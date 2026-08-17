@@ -33,7 +33,10 @@ import matplotlib.pyplot as plt
 # load the database
 dotenv.load_dotenv()
 
-sql_engine = sqlalchemy.create_engine(os.getenv("DATABASE_URL"))
+sql_engine = sqlalchemy.create_engine(
+        os.getenv("DATABASE_URL"),
+        poolclass=sqlalchemy.NullPool
+        )
 sql_metadata = sqlalchemy.MetaData()
 user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
 project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)

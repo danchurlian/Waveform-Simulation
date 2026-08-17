@@ -1,6 +1,6 @@
 fastapi[standard]
+jinja2
 httpx
-pytest
 numpy
 scipy
 matplotlib

@@ -3,16 +3,15 @@ name = "dchu-waveform-sim"
 version = "2.0.0"
 requires-python = ">= 3.12"
 dependencies = [
-  "fastapi",
+  "fastapi[standard]",
   "httpx",
-  "pytest",
   "numpy",
   "scipy",
   "matplotlib",
   "latex2mathml",
   "sqlalchemy",
   "python-dotenv",
-  "psycopg",
+  "psycopg[binary]",
   "bcrypt",
 ]
 authors = [
@@ -21,4 +20,4 @@ authors = [
 
 
 [tool.vercel]
-entrypoint = "app:app.py"
+entrypoint = "app.app:app"
