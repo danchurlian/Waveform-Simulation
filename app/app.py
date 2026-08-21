@@ -414,11 +414,11 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 
             if existing_user_row is None:
                 # create the account
-                conn.execute(
+                insert_result = conn.execute(
                     sqlalchemy.insert(user_db_table)
                     .values(username=login_form.username, password=hashed_pw)
                 )
-                # TODO: get the new user_id of the new row
+                user_id = insert_result.inserted_primary_key[0]
                 result = "created account"
                 login_success = True
             else:
@@ -448,8 +448,9 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     response = HTMLResponse(content=result, status_code=200)
 
     if login_success:
-        # TODO: delete the old session cookie and remove it from the session table
-        # This happens when signing in without logging out first
+        if session_id is not None:
+            delete_session_id_from_database(session_id)
+
         session_id = new_session_id()
         store_session_id_to_database(session_id=session_id, user_id=user_id, username=login_form.username)
 
