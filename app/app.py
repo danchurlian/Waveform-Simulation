@@ -542,6 +542,28 @@ def delete_session_id_from_database(session_id: str) -> bool:
     return success
 
 
+# does not determine if username already exists
+def is_valid_username(username: str) -> bool:
+    if " " in username:
+        return False
+
+    BLACKLISTED_USERNAMES: set = {""}
+    if username in BLACKLISTED_USERNAMES:
+        return False
+
+    return True
+
+
+def is_valid_password(password: str) -> bool:
+    if len(password) == 0:
+        return False
+
+    if " " in password:
+        return False
+
+    return True
+
+
 @app.post("/login")
 def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
@@ -549,32 +571,38 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     login_success: bool = False
     user_id: int | None = None
 
+
     if login_form.useraction == "create":
-        # store the hashed password into the database
-        salt = bcrypt.gensalt()
-        hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
-        hashed_pw: str = hashed.decode("utf-8")
-        
-        result = "Failed to create account"
+        if not is_valid_username(login_form.username):
+            result = f"Cannot use this username '{login_form.username}'!"
+        elif not is_valid_password(login_form.password):
+            result = f"Cannot use this password '{login_form.password}'!"
+        else:
+            # store the hashed password into the database
+            salt = bcrypt.gensalt()
+            hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
+            hashed_pw: str = hashed.decode("utf-8")
+            
+            result = "Failed to create account"
 
-        with sql_engine.begin() as conn:
-            # enter the password for the user
-            existing_user_row = conn.execute(
-                sqlalchemy.select(user_db_table)
-                .where(user_db_table.c.username == login_form.username)
-                ).first()
+            with sql_engine.begin() as conn:
+                # enter the password for the user
+                existing_user_row = conn.execute(
+                    sqlalchemy.select(user_db_table)
+                    .where(user_db_table.c.username == login_form.username)
+                    ).first()
 
-            if existing_user_row is None:
-                # create the account
-                insert_result = conn.execute(
-                    sqlalchemy.insert(user_db_table)
-                    .values(username=login_form.username, password=hashed_pw)
-                )
-                user_id = insert_result.inserted_primary_key[0]
-                result = "created account"
-                login_success = True
-            else:
-                result = f"{login_form.username} already exists!"
+                if existing_user_row is None:
+                    # create the account
+                    insert_result = conn.execute(
+                        sqlalchemy.insert(user_db_table)
+                        .values(username=login_form.username, password=hashed_pw)
+                    )
+                    user_id = insert_result.inserted_primary_key[0]
+                    result = "created account"
+                    login_success = True
+                else:
+                    result = f"{login_form.username} already exists!"
 
     else:
         # compare in database
