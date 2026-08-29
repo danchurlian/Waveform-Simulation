@@ -9,9 +9,10 @@ dependencies = [
   "scipy",
   "matplotlib",
   "latex2mathml",
-  "sqlalchemy",
+  "sqlalchemy[asyncio]",
   "python-dotenv",
   "psycopg[binary]",
+  "asyncpg",
   "bcrypt",
 ]
 authors = [
