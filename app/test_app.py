@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from fastapi.responses import Response
 from .app import app
 
 
@@ -67,3 +68,50 @@ def test_audio_no_freqs():
 def test_invalid_save():
     response = client.delete("/projects/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404
+
+
+
+def test_login_logout():
+    response: Response = client.post("/login", data={
+        "username": "dchu400",
+        "password": "1234",
+        "useraction": "login"
+        })
+    assert response.status_code == 200
+    assert "Login success" in response.text
+
+    session_id: str = response.cookies.get("session_id")
+
+    response = client.get("/logout", cookies={
+        "session_id": session_id})
+    assert response.status_code == 200
+
+
+def test_login_invalid_password():
+    response = client.post("/login", data={
+            "username": "dchu400",
+            "password": "1234j",
+            "useraction": "login",
+        })
+    assert response.status_code == 200
+    assert "Incorrect" in response.text
+
+
+def test_create_blank_username():
+    response = client.post("/login", data={
+            "username": "",
+            "password": "1234",
+            "useraction": "create",
+        })
+    assert response.status_code == 200
+    assert "Cannot use this username" in response.text
+
+def test_create_blank_password():
+    response = client.post("/login", data={
+            "username": "testuser",
+            "password": "",
+            "useraction": "create",
+        })
+    assert response.status_code == 200
+    assert "Cannot use this password" in response.text
+

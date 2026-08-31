@@ -1,21 +1,28 @@
+from contextlib import asynccontextmanager
 from types import NoneType
 
 from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 import sqlalchemy
+from sqlalchemy.ext.asyncio import create_async_engine \
+        as create_async_sql_engine
 import dotenv
 import bcrypt
 
+import asyncio
 import io
+import os
 import base64
 import secrets
 import uuid
 import json
 import latex2mathml.converter
+import datetime as dt
+from http.cookies import CookieError, SimpleCookie
 
 from typing_extensions import Annotated
 from pydantic import BaseModel
@@ -29,13 +36,41 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-env_values = dotenv.dotenv_values(".env")
-sql_engine = sqlalchemy.create_engine(env_values["DATABASE_URL"])
+# load the database
+dotenv.load_dotenv()
+DB_USER: str = os.getenv("POSTGRES_USER")
+DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD")
+DB_HOST: str = os.getenv("POSTGRES_HOST")
+DB_PORT: str = os.getenv("POSTGRES_PORT")
+DB_NAME: str = os.getenv("DB_NAME")
+
+sql_engine = sqlalchemy.create_engine(
+        os.getenv("DATABASE_URL"),
+        poolclass=sqlalchemy.NullPool,
+        )
+
+async_sql_engine = create_async_sql_engine(
+        f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        poolclass=sqlalchemy.NullPool,
+        connect_args={"command_timeout": 5}
+        )
+
 sql_metadata = sqlalchemy.MetaData()
 user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
 project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
+session_db_table = sqlalchemy.Table("session", sql_metadata, autoload_with=sql_engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    session_cleanup_task = asyncio.create_task(session_cleanup_loop())
+
+    yield
+
+    session_cleanup_task.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
@@ -86,8 +121,8 @@ class SessionInfo:
     username: str
     user_id: int
 
-
-SESSION_MAP: dict[str, SessionInfo] = {}
+SESSION_INACTIVITY_TIMEOUT = dt.timedelta(minutes = 30)
+SESSION_CLEANUP_INTERVAL_MINS: float = 10 * 1 / 60
 
 
 # -----------------------------------------------------------------------------
@@ -158,7 +193,8 @@ WAVEFORM_EQS: dict = {
 # ---------------------------------------------------------------
 
 
-def get_project_info_from_database(user_id: int) -> list[ProjectInfo]:
+
+def get_project_info_from_database(user_id: int | None) -> list[ProjectInfo]:
     res = []
     if user_id is not None:
         with sql_engine.begin() as conn:
@@ -241,7 +277,7 @@ def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | 
     except ValueError:
         return HTMLResponse(content="Frequencies must be integers!", status_code=200)
 
-    session_info = SESSION_MAP.get(session_id)
+    session_info = get_session_info_from_database(session_id=session_id)
     user_id: int | None = session_info.user_id if session_info is not None else None
     if user_id is None:
         return HTMLResponse(content="Please login to save.", status_code=200)
@@ -291,7 +327,8 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
     if session_id is None:
         return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
 
-    user_id = SESSION_MAP.get(session_id).user_id if session_id in SESSION_MAP else None
+    session_info = get_session_info_from_database(session_id=session_id)
+    user_id = session_info.user_id if session_info is not None else None
 
     project_list: list[ProjectInfo] = get_project_info_from_database(user_id)
     content: HTMLString = "You have no projects!"
@@ -335,9 +372,196 @@ def delete_project(project_id: str) -> HTMLResponse:
 
 # -----------------------------------------------------------------------------
 
+
+@app.middleware("http")
+async def check_session_cookie_on_http_request(request: Request, callback) -> Response:
+    """
+    Let E = expired, S = set_cookie_enabled, G = set_cookie_good
+    Let the lowercase letters be the negated versions of these variables
+
+
+    expired or not + has set session cookie + is in database -> do nothing
+    expired or not + has set session cookie + NOT in database -> delete the set cookie
+    no set_cookie but expired session cookie from check -> delete the session cookie
+    no set_cookie and no expired -> do nothing
+
+
+    Truth table
+    E S G
+    1 1 1 0
+    1 1 0 1
+    1 0 1 1
+    1 0 0 1
+    0 1 1 0
+    0 1 0 1
+    0 0 1 0
+    0 0 0 0
+    """
+    
+    # boolean algebra
+    # esg + esG + eSG + ESG
+    # es + eSG + ESG
+    # es + SG
+    # negate
+    # (E + S)(s + g)
+    # Es + Eg + Ss + Sg
+    # Es + Eg + Sg final answer for deletion
+
+    expired: bool = False
+    set_cookie_enabled: bool = False
+    set_cookie_good: bool = False
+
+    should_delete_cookie: bool = False
+    session_id: str | None = request.cookies.get("session_id")
+    session_info = get_session_info_from_database(session_id=session_id)
+
+    # the session cookie is not stored in the session database
+    # so we simply mark the cookie as expired
+    if session_info is None:
+        # delete the cookie
+        request.cookies.pop("session_id", None)
+        expired = True
+
+
+    response: Response = await callback(request)
+    
+
+    cookie = SimpleCookie()
+    try:
+        set_cookie_header = response.headers.get("set-cookie")
+
+        if set_cookie_header is not None:
+            cookie.load(set_cookie_header)
+            response_session_id: str | None = (
+                    cookie["session_id"].value if "session_id" in cookie
+                    else None
+                    )
+
+            response_session_info = get_session_info_from_database(session_id=response_session_id)
+
+            if response_session_id is not None:
+                set_cookie_enabled = True
+
+            if response_session_info is not None:
+                set_cookie_good = True
+
+    except CookieError as e:
+        print("cookie error", e)
+
+
+    # Es + Eg + Sg final answer for deletion
+    should_delete_cookie = expired and not set_cookie_enabled \
+            or expired and not set_cookie_good \
+            or set_cookie_enabled and not set_cookie_good
+
+    # print(f"{expired=} {set_cookie_enabled=} {set_cookie_good=} {should_delete_cookie=}")
+
+    if should_delete_cookie:
+        print("timed out")
+        response.delete_cookie("session_id")
+
+    return response
+
+
 def new_session_id() -> str:
     session_id = secrets.token_hex(8)
     return session_id
+
+
+async def session_cleanup_old() -> None: 
+    now_time = dt.datetime.now(dt.timezone.utc)
+    base_time = now_time - SESSION_INACTIVITY_TIMEOUT
+
+    try:
+        async with async_sql_engine.begin() as conn:
+            result = await conn.execute(
+                    sqlalchemy.delete(session_db_table)
+                    .where(session_db_table.c.last_interacted < base_time)
+                    )
+            if result.rowcount > 0:
+                print("deleted an old session")
+
+    except asyncio.CancelledError as e:
+        print(e)
+       
+
+# must be called by a lifespan function defined by FastAPI
+async def session_cleanup_loop():
+    # we will have to use async version of sqlalchemy
+    print("cleanup loop")
+    while True:
+        await asyncio.sleep(SESSION_CLEANUP_INTERVAL_MINS * 60)
+        await session_cleanup_old()
+
+
+def get_session_info_from_database(user_id: int | None = None, 
+                                   session_id: str | None = None) -> SessionInfo | None:
+    session_info = None
+    if user_id is not None or session_id is not None:
+        with sql_engine.begin() as conn:
+            result = conn.execute(
+                    sqlalchemy.select(session_db_table)
+                    .where(sqlalchemy.or_(
+                        session_db_table.c.user_id == user_id,
+                        session_db_table.c.session_id == session_id
+                        )
+                    )
+                    ).first()
+
+            if result is not None:
+                session_info = SessionInfo(user_id=result.user_id, username=result.username)
+    return session_info
+
+
+def store_session_id_to_database(session_id: str, user_id: int, username: str) -> bool:
+    # create time here
+    create_time = dt.datetime.now(dt.timezone.utc)
+    # store it in database, seems like in database it stores the time and not the date
+
+    success: bool = False
+    with sql_engine.begin() as conn:
+        result = conn.execute(
+                sqlalchemy.insert(session_db_table)
+                .values(session_id=session_id, user_id=user_id, username=username,
+                        created=create_time, last_interacted=create_time)
+                )
+        success = result.rowcount > 0
+
+    return success
+
+
+def delete_session_id_from_database(session_id: str) -> bool:
+    success: bool = False
+    with sql_engine.begin() as conn:
+        result = conn.execute(
+                sqlalchemy.delete(session_db_table)
+                .where(session_db_table.c.session_id == session_id)
+                )
+        success = result.rowcount > 0
+
+    return success
+
+
+# does not determine if username already exists
+def is_valid_username(username: str) -> bool:
+    if " " in username:
+        return False
+
+    BLACKLISTED_USERNAMES: set = {""}
+    if username in BLACKLISTED_USERNAMES:
+        return False
+
+    return True
+
+
+def is_valid_password(password: str) -> bool:
+    if len(password) == 0:
+        return False
+
+    if " " in password:
+        return False
+
+    return True
 
 
 @app.post("/login")
@@ -347,30 +571,38 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     login_success: bool = False
     user_id: int | None = None
 
-    if login_form.useraction == "create":
-        # store the hashed password into the database
-        salt = bcrypt.gensalt()
-        hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
-        hashed_pw: str = hashed.decode("utf-8")
-        
-        result = "Failed to create account"
 
-        with sql_engine.begin() as conn:
-            # enter the password for the user
-            existing_user_row = conn.execute(
+    if login_form.useraction == "create":
+        if not is_valid_username(login_form.username):
+            result = f"Cannot use this username '{login_form.username}'!"
+        elif not is_valid_password(login_form.password):
+            result = f"Cannot use this password '{login_form.password}'!"
+        else:
+            # store the hashed password into the database
+            salt = bcrypt.gensalt()
+            hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
+            hashed_pw: str = hashed.decode("utf-8")
+            
+            result = "Failed to create account"
+
+            with sql_engine.begin() as conn:
+                # enter the password for the user
+                existing_user_row = conn.execute(
                     sqlalchemy.select(user_db_table)
                     .where(user_db_table.c.username == login_form.username)
                     ).first()
-            if existing_user_row is None:
-                # create the account
-                conn.execute(
-                    sqlalchemy.insert(user_db_table)
-                    .values(username=login_form.username, password=hashed_pw)
-                )
-                result = "created account"
-                login_success = True
-            else:
-                result = f"{login_form.username} already exists!"
+
+                if existing_user_row is None:
+                    # create the account
+                    insert_result = conn.execute(
+                        sqlalchemy.insert(user_db_table)
+                        .values(username=login_form.username, password=hashed_pw)
+                    )
+                    user_id = insert_result.inserted_primary_key[0]
+                    result = "created account"
+                    login_success = True
+                else:
+                    result = f"{login_form.username} already exists!"
 
     else:
         # compare in database
@@ -396,12 +628,11 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     response = HTMLResponse(content=result, status_code=200)
 
     if login_success:
-        # delete the old session cookie and remove it from the session table
-        if session_id is not None and session_id in SESSION_MAP:
-            del SESSION_MAP[session_id]
+        if session_id is not None:
+            delete_session_id_from_database(session_id)
 
         session_id = new_session_id()
-        SESSION_MAP[session_id] = SessionInfo(username=login_form.username, user_id=user_id)
+        store_session_id_to_database(session_id=session_id, user_id=user_id, username=login_form.username)
 
         response.set_cookie(
                 "session_id", 
@@ -420,12 +651,12 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 
 @app.get("/logout")
 def logout(session_id: Annotated[str | None, Cookie()] = None):
-    if session_id is not None and session_id in SESSION_MAP:
-        del SESSION_MAP[session_id]
+    if session_id is not None:
+        sql_success = delete_session_id_from_database(session_id=session_id)
+        print(f"{sql_success=}")
 
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
-    response.delete_cookie("user_id")
     response.delete_cookie("session_id")
     return response
 
@@ -617,9 +848,10 @@ def index(request: Request, session_id: Annotated[str | None, Cookie()] = None):
     # display the user's name at the top of the website
     username: str = "Signed out"
 
-    if session_id is not None and session_id in SESSION_MAP:
-        session_info = SESSION_MAP.get(session_id)
-        username = session_info.username
+    if session_id is not None:
+        session_info = get_session_info_from_database(session_id=session_id)
+        if session_info is not None:
+            username = session_info.username
 
     return templates.TemplateResponse(
             request=request, 

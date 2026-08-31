@@ -1,0 +1,25 @@
+[project]
+name = "dchu-waveform-sim"
+version = "2.0.0"
+requires-python = ">= 3.12"
+dependencies = [
+  "fastapi[standard]",
+  "httpx",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "latex2mathml",
+  "sqlalchemy[asyncio]",
+  "python-dotenv",
+  "psycopg[binary]",
+  "asyncpg",
+  "bcrypt",
+  "pytest"
+]
+authors = [
+  {name = "Daniel Chu", email = "chudaniel400@gmail.com"}
+]
+
+
+[tool.vercel]
+entrypoint = "app.app:app"
