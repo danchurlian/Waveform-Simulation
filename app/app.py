@@ -632,7 +632,11 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
             delete_session_id_from_database(session_id)
 
         session_id = new_session_id()
-        store_session_id_to_database(session_id=session_id, user_id=user_id, username=login_form.username)
+        try:
+            store_session_id_to_database(session_id=session_id, user_id=user_id, username=login_form.username)
+        except Exception as e:
+            result = f"{login_form.username} is already logged in somewhere else!"
+            print(f"storing session cookie failed, {e}")
 
         response.set_cookie(
                 "session_id", 
@@ -653,7 +657,6 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 def logout(session_id: Annotated[str | None, Cookie()] = None):
     if session_id is not None:
         sql_success = delete_session_id_from_database(session_id=session_id)
-        print(f"{sql_success=}")
 
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
