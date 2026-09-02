@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-from fastapi.responses import Response
 from .app import app
 
 
@@ -72,7 +71,7 @@ def test_invalid_save():
 
 
 def test_login_logout():
-    response: Response = client.post("/login", data={
+    response = client.post("/login", data={
         "username": "dchu400",
         "password": "1234",
         "useraction": "login"
@@ -81,6 +80,7 @@ def test_login_logout():
     assert "Login success" in response.text
 
     session_id: str = response.cookies.get("session_id")
+    assert session_id is not None
 
     response = client.get("/logout", cookies={
         "session_id": session_id})
@@ -106,6 +106,7 @@ def test_create_blank_username():
     assert response.status_code == 200
     assert "Cannot use this username" in response.text
 
+
 def test_create_blank_password():
     response = client.post("/login", data={
             "username": "testuser",
@@ -115,3 +116,26 @@ def test_create_blank_password():
     assert response.status_code == 200
     assert "Cannot use this password" in response.text
 
+
+def test_login_from_2_clients():
+    response1 = client.post("/login", data={
+        "username": "dchu400",
+        "password": "1234",
+        "useraction": "login",
+        })
+    assert response1.status_code == 200
+    session_id: str = response1.cookies.get("session_id")
+    assert session_id is not None 
+
+    response2 = client.post("/login", data={
+        "username": "dchu400",
+        "password": "1234",
+        "useraction": "login",
+        })
+    assert response2.status_code == 200
+    assert "already logged in " in response2.text
+
+    logout_response = client.get("/logout", cookies={
+        "session_id": session_id})
+
+    assert logout_response.status_code == 200

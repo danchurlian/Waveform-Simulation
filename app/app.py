@@ -569,8 +569,11 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     result: str = "Login failed."
 
     login_success: bool = False
-    user_id: int | None = None
+    login_valid: bool = False
+    create_session_success: bool = True
+    the_new_session_id: str | None = None
 
+    user_id: int | None = None
 
     if login_form.useraction == "create":
         if not is_valid_username(login_form.username):
@@ -600,7 +603,7 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
                     )
                     user_id = insert_result.inserted_primary_key[0]
                     result = "created account"
-                    login_success = True
+                    login_valid = True
                 else:
                     result = f"{login_form.username} already exists!"
 
@@ -615,32 +618,38 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
             if user_row is not None:
                 if bcrypt.checkpw(login_form.password.encode("utf-8"), user_row.password.encode("utf-8")):
                     result = "Login success."
-                    login_success = True
                     user_id = user_row.user_id
+                    login_valid = True
                 else:
                     result = "Incorrect password."
             else:
                 result = "Username does not exist."
 
 
+    # attempt to store session cookies, which checks if the user is logged in already
+    # from another device / client
+    # login valid --> session success --> success message
+    if login_valid:
+        the_new_session_id = new_session_id()
 
-    # make the response object here 
-    response = HTMLResponse(content=result, status_code=200)
-
-    if login_success:
-        if session_id is not None:
-            delete_session_id_from_database(session_id)
-
-        session_id = new_session_id()
         try:
-            store_session_id_to_database(session_id=session_id, user_id=user_id, username=login_form.username)
+            store_session_id_to_database(session_id=the_new_session_id, user_id=user_id, username=login_form.username)
         except Exception as e:
             result = f"{login_form.username} is already logged in somewhere else!"
             print(f"storing session cookie failed, {e}")
+            create_session_success = False
 
+        if create_session_success and session_id is not None:
+            delete_session_id_from_database(session_id)
+
+    login_success = login_valid and create_session_success
+
+    # make the response object here 
+    response = HTMLResponse(content=result, status_code=200)
+    if login_success and the_new_session_id is not None:
         response.set_cookie(
                 "session_id", 
-                session_id, 
+                the_new_session_id, 
                 httponly=True, 
                 secure=True, 
                 )
@@ -656,7 +665,8 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 @app.get("/logout")
 def logout(session_id: Annotated[str | None, Cookie()] = None):
     if session_id is not None:
-        sql_success = delete_session_id_from_database(session_id=session_id)
+        delete_success = delete_session_id_from_database(session_id=session_id)
+        print(f"{delete_success=}")
 
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
     response = HTMLResponse(content=responseHTML, status_code=200)
