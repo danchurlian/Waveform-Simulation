@@ -141,9 +141,7 @@ async def audio_exception_handler(_request, exc):
     return HTMLResponse(content=f"<div id='audio-output'>{exc.detail}</div>", status_code=400) 
 
 
-
-
-# waveform formulas --------------------------------
+# waveform formulas -----------------------------------------------------------
 def sin_wave(ts: np.ndarray, freq: int = 1):
     return np.sin(2 * np.pi * freq * ts)
 
@@ -160,39 +158,7 @@ def square_wave(ts: np.ndarray, freq: int = 1):
     return np.sign(np.sin(2 * np.pi * freq * ts))
 
 
-# ---------------------------------------------------------------
-
-JUMP_TABLE: dict = {
-    "Sine Wave": sin_wave,
-    "Triangle Wave": triangle_wave,
-    "Sawtooth Wave": sawtooth_wave,  
-    "Square Wave": square_wave,
-}
-
-WAVEFORM_EQS: dict = {
-    "Sine Wave": {
-        "eq_og": "\\sin({2 \\pi f t})",
-        "eq_series": "\\sin({2 \\pi f t})",
-    },
-
-    "Sawtooth Wave": {
-        "eq_og": "2( f t - \\lfloor f t \\rfloor - \\frac{1}{2})",
-        "eq_series": "\\sin({2\\pi f t}) - \\frac{1}{2}\\sin({2\\pi 2 f t}) + \\frac{1}{3}\\sin({2\\pi 3 f t}) + ...",
-    },
-
-    "Triangle Wave": {
-        "eq_og": "4(| f t - \\lfloor f t \\rfloor - \\frac{1}{2}| - \\frac{1}{4})",
-        "eq_series": "\\sin({2\\pi f t}) - \\frac{1}{9}sin({2\\pi 3 f t}) + \\frac{1}{25}sin({2\\pi 5 f t}) + ...",
-    },
-    "Square Wave": {
-        "eq_og": "\\text{sgn}({\\sin({2\\pi f t})})",
-        "eq_series": "\\sin(2\\pi f t) + \\frac{1}{3}sin(2\\pi 3 f t) + \\frac{1}{5}\\sin(2\\pi 5 f t) + ..."
-    },
-}
-
-
-# ---------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 
 
 def get_project_info_from_database(user_id: int | None) -> list[ProjectInfo]:
@@ -677,25 +643,6 @@ def logout(session_id: Annotated[str | None, Cookie()] = None):
 
 # -----------------------------------------------------------------------------
 
-def get_numpy_data(freq: int, waveform: str):
-    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-    ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
-    return ts, ys
-
-
-def chord(freq_list: list[int], waveform: str) -> np.ndarray:
-    final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
-    for freq in freq_list:
-        __, ys = get_numpy_data(freq, waveform)
-        final_ys += ys
-
-    ys_max = np.max(final_ys)
-    ys_min = np.min(final_ys)
-
-    return 2 * ((final_ys - ys_min) / (ys_max - ys_min))  - 1
-
-
-
 
 def get_audio_tag(ys: np.ndarray) -> HTMLString:
     ys = (32767 * ys).astype('int16')
@@ -705,15 +652,6 @@ def get_audio_tag(ys: np.ndarray) -> HTMLString:
     # write an audio tag and use the data type attribute and base64 encoding
     datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
     return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
-
-
-
-@app.get("/test-chord", response_class=HTMLResponse)
-def test_chord():
-    freq_list: list = [220, 440, 523, 659, 880]
-    ys = chord(freq_list, "Square Wave")
-    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
-
 
 
 
@@ -729,7 +667,7 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
         if freq < 0:
             raise AudioGenerationException(detail=f"The frequency {freq} cannot be negative!")
 
-    ys = chord(freqs, waveform=data.sig_type)
+    ys = wavegen.get_total_signal_data(freqs, waveform=data.sig_type)
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
 
 
@@ -748,8 +686,8 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = chord(freqs, data.sig_type)
-        # ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
+        ys: np.ndarray = wavegen.get_total_signal_data(freqs, data.sig_type)
+
         imgtag: str = wavegen.generate_image(ts, ys)
 
         # if there is only one frequency, display equation information.

@@ -51,6 +51,34 @@ def square_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
     return np.sign(np.sin(2 * np.pi * freq * ts))
 
 
+JUMP_TABLE: dict = {
+    "Sine Wave": sin_wave,
+    "Triangle Wave": triangle_wave,
+    "Sawtooth Wave": sawtooth_wave,  
+    "Square Wave": square_wave,
+}
+
+
+# -----------------------------------------------------------------------------
+
+def get_single_signal_data(freq: int, waveform: str):
+    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+    ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
+    return ts, ys
+
+
+def get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
+    final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
+    for freq in freq_list:
+        __, ys = get_single_signal_data(freq, waveform)
+        final_ys += ys
+
+    ys_max = np.max(final_ys)
+    ys_min = np.min(final_ys)
+
+    return 2 * ((final_ys - ys_min) / (ys_max - ys_min))  - 1
+
+
 # -----------------------------------------------------------------------------
 
 def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
