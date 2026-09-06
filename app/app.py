@@ -20,7 +20,6 @@ import base64
 import secrets
 import uuid
 import json
-import latex2mathml.converter
 import datetime as dt
 from http.cookies import CookieError, SimpleCookie
 
@@ -737,91 +736,25 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 
 @app.post("/image", response_class=HTMLResponse)
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
+    # setup error message div and setup result variable
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
+    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
+    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
 
     freq: int = data.freq_slider
     # add some error handling to this
     freqs: list[int] = [int(freq) for freq in data.freq_text]
 
-    # for text input only
-    # if int, cast it, else if a decimal, round it down and cast to int, else error message
-    """
-    try:
-        freq = int(float(data.freq_text))
-    except ValueError:
-        error_msg = "Frequency must be a number!"
-    """
-
-
-    # setup error message div and setup result variable
-    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
-
-    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
-
-
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-
         # Calculate and sample the signal, generate plots
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
         ys: np.ndarray = chord(freqs, data.sig_type)
         # ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
         imgtag: str = wavegen.generate_image(ts, ys)
 
-        # math formulas, using MathML
-        eq_original: str = "No object" 
-        eq_series: str = "No object" 
-
-        assert data.sig_type in WAVEFORM_EQS, f"Signal type {data.sig_type} is not known!"
-        assert "eq_og"in WAVEFORM_EQS[data.sig_type], f"Original equations is not found for {data.sig_type}!"
-        assert "eq_series" in WAVEFORM_EQS[data.sig_type], f"Fourier series expansion is not found for {data.sig_type}!"
-
-
-
         # if there is only one frequency, display equation information.
         # if there is a list of frequencies, do not display equation information.
-        equation_list_html: HTMLString = "<ul id='equation-list' hx-swap-oob='true' style='display: none; padding: 1rem 0 0 1rem'>"
-
-        if (len(freqs) == 1):
-            # Format the equations
-            # assign variables the strings
-            eq_og_template: str = WAVEFORM_EQS[data.sig_type]["eq_og"]
-            eq_series_template: str = WAVEFORM_EQS[data.sig_type]["eq_series"]
-
-            eq_original: str = eq_og_template.replace(" f ", f"({freq})")
-            eq_series: str = eq_series_template.replace(" f ", f"({freq})")
-
-            # convert each expression to MathML
-            eq_og_template = latex2mathml.converter.convert(eq_og_template)
-            eq_series_template = latex2mathml.converter.convert(eq_series_template)
-
-            eq_original = latex2mathml.converter.convert(eq_original)
-            eq_series = latex2mathml.converter.convert(eq_series)
-
-            # assembly the HTML content
-            equation_list_html = f"""
-<ul id='equation-list' hx-swap-oob='true' style='padding: 1rem 0 0 1rem'>
-    <li>
-        <eq-label id='freq-label'>Chosen frequency:</eq-label> 
-        {freq} Hz
-    </li>
-    <li>
-        <eq-label>Original equation formula:</eq-label> 
-        {eq_og_template}
-    </li>
-    <li> 
-        <eq-label>Original equation:</eq-label>
-        {eq_original}
-    </li>
-    <li>
-        <eq-label>Fourier expansion formula:</eq-label>
-        {eq_series_template}
-    </li>
-    <li> 
-        <eq-label>Fourier expansion:</eq-label>
-        {eq_series}
-    </li>
-</ul>
-"""
+        equation_list_html = wavegen.generate_equation_list_html(freqs, data.sig_type)
 
         # final response HTML that is returned
         response = f""" 
@@ -829,10 +762,8 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 {imgtag}
 {equation_list_html}
 """ 
-
     return HTMLResponse(content=response, status_code=200)
     
-
 
 @app.get("/")
 def index(request: Request, session_id: Annotated[str | None, Cookie()] = None):
