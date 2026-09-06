@@ -36,6 +36,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
+import app.wavegen as wavegen
+
+
 # load the database
 dotenv.load_dotenv()
 DB_USER: str = os.getenv("POSTGRES_USER")
@@ -787,7 +790,7 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
         ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
         ys: np.ndarray = chord(freqs, data.sig_type)
         # ys: np.ndarray = JUMP_TABLE[data.sig_type](ts, freq=freq)
-        imgtag: str = image(ts, ys)
+        imgtag: str = wavegen.generate_image(ts, ys)
 
         # math formulas, using MathML
         eq_original: str = "No object" 

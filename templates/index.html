@@ -19,8 +19,7 @@
                 form.addEventListener("htmx:afterRequest", () => {
                     const loadImageTag = document.getElementById("plot-image-load");
                     if (loadImageTag) {
-                        const imgData = loadImageTag.getAttribute("src");
-                        finalImageTag.setAttribute("src", imgData);
+                        finalImageTag.appendChild(loadImageTag.closeNode(true));
                     }
                 });
 
@@ -238,8 +237,8 @@
                         </div>
                     </div>
                     <div class="centered-container" id="graph-data">
-                        <img id="plot-image" style="padding: 1rem" />
-                        <img id="plot-image-load" style="display:none" />
+                        <div id="plot-image" style="padding: 1rem"></div>
+                        <div id="plot-image-load" style="display:none"></div>
                     </div>
                 </div>
 
