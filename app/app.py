@@ -33,7 +33,6 @@ from scipy.io import wavfile
 
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 import app.wavegen as wavegen
@@ -733,30 +732,6 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 
     ys = chord(freqs, waveform=data.sig_type)
     return HTMLResponse(content=get_audio_tag(ys), status_code=200)
-
-
-
-
-def image(ts: np.ndarray, ys: np.ndarray):
-    fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
-    hs: np.ndarray = np.abs(np.fft.rfft(ys))
-    # Make 2 subplots, top is the signal plot, bottom is the spectrum plot
-    fig, axes = plt.subplots(2)
-    axes[0].plot(ts, ys)
-    axes[0].set_title("Signal")
-    axes[1].plot(fs, hs)
-    axes[1].set_title("Spectrum")
-
-    fig.tight_layout()
-
-    buffer = io.BytesIO()
-    # Save IO and into base64
-    fig.savefig(buffer, format='png')
-    plt.close(fig)
-    # Then return the data as an image tag
-    data: str = base64.b64encode(buffer.getbuffer()).decode('ascii')
-    return f"<img id='plot-image-load' style='display: none' src='data:image/png;base64,{data}'/>"
-
 
 
 
