@@ -141,23 +141,6 @@ async def audio_exception_handler(_request, exc):
     return HTMLResponse(content=f"<div id='audio-output'>{exc.detail}</div>", status_code=400) 
 
 
-# waveform formulas -----------------------------------------------------------
-def sin_wave(ts: np.ndarray, freq: int = 1):
-    return np.sin(2 * np.pi * freq * ts)
-
-
-def sawtooth_wave(ts: np.ndarray, freq: int = 1):
-    return 2 * ((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2)
-
-
-def triangle_wave(ts: np.ndarray, freq: int = 1):
-    return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
-
-
-def square_wave(ts: np.ndarray, freq: int = 1):
-    return np.sign(np.sin(2 * np.pi * freq * ts))
-
-
 # -----------------------------------------------------------------------------
 
 
