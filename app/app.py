@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from types import NoneType
 
 from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
@@ -11,14 +10,12 @@ import sqlalchemy
 from sqlalchemy.ext.asyncio import create_async_engine \
         as create_async_sql_engine
 import dotenv
-import bcrypt
 
 import asyncio
 import io
 import os
 import base64
 import secrets
-import uuid
 import json
 import datetime as dt
 from http.cookies import CookieError, SimpleCookie
@@ -35,6 +32,9 @@ matplotlib.use("Agg")
 
 
 import app.wavegen as wavegen
+import app.database_manager as database_manager
+from app.database_manager import AccountLoginResult, ProjectInfo, AccountCreateResult
+
 
 
 # load the database
@@ -94,7 +94,7 @@ class LoginForm(BaseModel):
     password: str
     useraction: str
 
-
+"""
 class ProjectInfo:
     frequencies: list[int]
     waveform: str
@@ -113,7 +113,7 @@ class ProjectInfo:
 
     def __str__(self) -> str:
         return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
-        
+"""        
 
 # -----------------------------------------------------------------------------
 
@@ -144,81 +144,6 @@ async def audio_exception_handler(_request, exc):
 # -----------------------------------------------------------------------------
 
 
-def get_project_info_from_database(user_id: int | None) -> list[ProjectInfo]:
-    res = []
-    if user_id is not None:
-        with sql_engine.begin() as conn:
-            stmt = (
-                    sqlalchemy.select(project_db_table)
-                    .where(project_db_table.c.user_id == user_id)
-                    )
-
-            query_result = conn.execute(stmt)
-            res = [ProjectInfo(frequencies=row.frequencies, 
-                                       waveform=row.waveform,
-                                       title=row.project_name,
-                                       project_id=row.project_id)
-
-                   for row in query_result]
-
-    return res
-
-
-def save_project_info_to_database(user_id: int, project_info: ProjectInfo) -> bool:
-    res: bool = True
-
-    with sql_engine.begin() as conn:
-        user_row = conn.execute(
-                    sqlalchemy.select(user_db_table)
-                    .where(user_db_table.c.user_id == user_id)
-                ).first()
-
-        if user_row is None:
-            return False
-
-        # check if the project already exists
-        existing_project_row = conn.execute(
-                sqlalchemy.select(project_db_table.c.project_name, project_db_table.c.project_id) \
-                        .where(project_db_table.c.project_name == project_info.title \
-                                and project_db_table.c.user_id == user_id
-                               )
-                ).first()
-
-        existing_id: int | NoneType = None
-        if existing_project_row is not None:
-            existing_id = existing_project_row.project_id
-
-        if existing_id is None:
-            # create a new entry 
-            stmt = sqlalchemy.insert(project_db_table) \
-                    .values(
-                        project_name=project_info.title,
-                        frequencies=project_info.frequencies,
-                        waveform=project_info.waveform,
-                        user_id=user_id
-                    )
-            conn.execute(stmt)
-
-        elif existing_id:
-            # update the existing entry
-            stmt = sqlalchemy.update(project_db_table) \
-                    .where(project_db_table.c.project_id == existing_id) \
-                    .values(
-                        project_name=project_info.title,
-                        frequencies=project_info.frequencies,
-                        waveform=project_info.waveform,
-                        user_id=user_id
-                    )
-            conn.execute(stmt)
-
-        else:
-            # saving failed for some reason
-            print("Saving error")
-            res = False
-
-    return res
-
-
 @app.post("/save", response_class=HTMLResponse)
 def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     freq_list: list[int] = []
@@ -236,7 +161,7 @@ def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | 
                                waveform=form.sig_type, 
                                title=form.title)
 
-    save_success: bool = save_project_info_to_database(user_id, project_info)
+    save_success: bool = database_manager.save_project_info_to_database(user_id, project_info)
     if not save_success:
         return HTMLResponse(content="Save failed!", status_code=200)
     
@@ -280,7 +205,7 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
     session_info = get_session_info_from_database(session_id=session_id)
     user_id = session_info.user_id if session_info is not None else None
 
-    project_list: list[ProjectInfo] = get_project_info_from_database(user_id)
+    project_list: list[database_manager.ProjectInfo] = database_manager.get_project_info_from_database(user_id)
     content: HTMLString = "You have no projects!"
 
     if len(project_list) > 0:
@@ -294,29 +219,9 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
 
 @app.delete("/projects/{project_id}")
 def delete_project(project_id: str) -> HTMLResponse:
-    where_clause = project_db_table.c.project_id == uuid.UUID(project_id)
-    can_delete: bool = True
+    delete_success = database_manager.delete_project_from_database(project_id)
 
-    with sql_engine.connect() as conn:
-        # test out the delete statement first before committing
-        delete_stmt = (
-                sqlalchemy.delete(project_db_table)
-                .where(where_clause)
-        )
-        delete_result = conn.execute(delete_stmt)
-
-        if delete_result.rowcount != 1:
-            can_delete = False
-            if delete_result.rowcount > 1:
-                print(f"deleting {project_id} will result in too many entries being removed.")
-            else:
-                print(f"{project_id} not found!")
-
-        if can_delete:
-            conn.commit()
-            
-
-    return HTMLResponse(content="", status_code=200) if can_delete \
+    return HTMLResponse(content="", status_code=200) if delete_success \
             else HTMLResponse(content="delete failed", status_code=404)
 
 
@@ -372,10 +277,8 @@ async def check_session_cookie_on_http_request(request: Request, callback) -> Re
         request.cookies.pop("session_id", None)
         expired = True
 
-
     response: Response = await callback(request)
     
-
     cookie = SimpleCookie()
     try:
         set_cookie_header = response.headers.get("set-cookie")
@@ -463,34 +366,6 @@ def get_session_info_from_database(user_id: int | None = None,
     return session_info
 
 
-def store_session_id_to_database(session_id: str, user_id: int, username: str) -> bool:
-    # create time here
-    create_time = dt.datetime.now(dt.timezone.utc)
-    # store it in database, seems like in database it stores the time and not the date
-
-    success: bool = False
-    with sql_engine.begin() as conn:
-        result = conn.execute(
-                sqlalchemy.insert(session_db_table)
-                .values(session_id=session_id, user_id=user_id, username=username,
-                        created=create_time, last_interacted=create_time)
-                )
-        success = result.rowcount > 0
-
-    return success
-
-
-def delete_session_id_from_database(session_id: str) -> bool:
-    success: bool = False
-    with sql_engine.begin() as conn:
-        result = conn.execute(
-                sqlalchemy.delete(session_db_table)
-                .where(session_db_table.c.session_id == session_id)
-                )
-        success = result.rowcount > 0
-
-    return success
-
 
 # does not determine if username already exists
 def is_valid_username(username: str) -> bool:
@@ -514,6 +389,8 @@ def is_valid_password(password: str) -> bool:
     return True
 
 
+# TODO: modularize the login function and break it down to smaller functions
+
 @app.post("/login")
 def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
@@ -526,54 +403,38 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
     user_id: int | None = None
 
     if login_form.useraction == "create":
-        if not is_valid_username(login_form.username):
-            result = f"Cannot use this username '{login_form.username}'!"
-        elif not is_valid_password(login_form.password):
-            result = f"Cannot use this password '{login_form.password}'!"
-        else:
-            # store the hashed password into the database
-            salt = bcrypt.gensalt()
-            hashed: bytes = bcrypt.hashpw(login_form.password.encode("utf-8"), salt)
-            hashed_pw: str = hashed.decode("utf-8")
-            
-            result = "Failed to create account"
+        create_result, new_user_id = database_manager.create_account(login_form.username, login_form.password)
 
-            with sql_engine.begin() as conn:
-                # enter the password for the user
-                existing_user_row = conn.execute(
-                    sqlalchemy.select(user_db_table)
-                    .where(user_db_table.c.username == login_form.username)
-                    ).first()
-
-                if existing_user_row is None:
-                    # create the account
-                    insert_result = conn.execute(
-                        sqlalchemy.insert(user_db_table)
-                        .values(username=login_form.username, password=hashed_pw)
-                    )
-                    user_id = insert_result.inserted_primary_key[0]
-                    result = "created account"
-                    login_valid = True
-                else:
-                    result = f"{login_form.username} already exists!"
+        # generate result message and do actions based on create account result
+        match create_result:
+            case AccountCreateResult.SUCCESS:
+                login_valid = True
+                user_id = new_user_id
+                result = "Created account"
+            case AccountCreateResult.INVALID_USERNAME:
+                result = f"Cannot use this username '{login_form.username}'!"
+            case AccountCreateResult.INVALID_PASSWORD:
+                result = f"Cannot use this password '{login_form.password}'!"
+            case AccountCreateResult.ACCOUNT_EXISTS:
+                result = f"{login_form.username} already exists!"
+            case _:
+                result = "Could not create account."
 
     else:
-        # compare in database
-        with sql_engine.begin() as conn:
-            user_search_stmt = (
-                    sqlalchemy.select(user_db_table)
-                    .where(user_db_table.c.username == login_form.username)
-                    )
-            user_row = conn.execute(user_search_stmt).first()
-            if user_row is not None:
-                if bcrypt.checkpw(login_form.password.encode("utf-8"), user_row.password.encode("utf-8")):
-                    result = "Login success."
-                    user_id = user_row.user_id
-                    login_valid = True
-                else:
-                    result = "Incorrect password."
-            else:
-                result = "Username does not exist."
+        login_result, new_user_id = database_manager.login_existing_account(login_form.username, login_form.password)
+
+        # generate result message and do actions based on login account result
+        match login_result:
+            case AccountLoginResult.SUCCESS:
+                user_id = new_user_id
+                login_valid = True
+                result = "Login success."
+            case AccountLoginResult.WRONG_PASSWORD:
+                result = "Incorrect password."
+            case AccountLoginResult.NO_FOUND_USERNAME:
+                result = f"Could not find username '{login_form.username}'."
+            case _:
+                result = "Login failed."
 
 
     # attempt to store session cookies, which checks if the user is logged in already
@@ -583,14 +444,14 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
         the_new_session_id = new_session_id()
 
         try:
-            store_session_id_to_database(session_id=the_new_session_id, user_id=user_id, username=login_form.username)
+            database_manager.store_session_id_to_database(session_id=the_new_session_id, user_id=user_id, username=login_form.username)
         except Exception as e:
             result = f"{login_form.username} is already logged in somewhere else!"
             print(f"storing session cookie failed, {e}")
             create_session_success = False
 
         if create_session_success and session_id is not None:
-            delete_session_id_from_database(session_id)
+            database_manager.delete_session_id_from_database(session_id)
 
     login_success = login_valid and create_session_success
 
@@ -615,7 +476,7 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 @app.get("/logout")
 def logout(session_id: Annotated[str | None, Cookie()] = None):
     if session_id is not None:
-        delete_success = delete_session_id_from_database(session_id=session_id)
+        delete_success = database_manager.delete_session_id_from_database(session_id=session_id)
         print(f"{delete_success=}")
 
     responseHTML: HTMLString = "<div id='user-label' hx-swap-oob='true'>Signed out</div>"
