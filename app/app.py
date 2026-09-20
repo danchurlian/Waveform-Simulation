@@ -152,7 +152,7 @@ def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | 
     except ValueError:
         return HTMLResponse(content="Frequencies must be integers!", status_code=200)
 
-    session_info = get_session_info_from_database(session_id=session_id)
+    session_info = database_manager.get_session_info_from_database(session_id=session_id)
     user_id: int | None = session_info.user_id if session_info is not None else None
     if user_id is None:
         return HTMLResponse(content="Please login to save.", status_code=200)
@@ -202,7 +202,7 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
     if session_id is None:
         return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
 
-    session_info = get_session_info_from_database(session_id=session_id)
+    session_info = database_manager.get_session_info_from_database(session_id=session_id)
     user_id = session_info.user_id if session_info is not None else None
 
     project_list: list[database_manager.ProjectInfo] = database_manager.get_project_info_from_database(user_id)
@@ -268,7 +268,7 @@ async def check_session_cookie_on_http_request(request: Request, callback) -> Re
 
     should_delete_cookie: bool = False
     session_id: str | None = request.cookies.get("session_id")
-    session_info = get_session_info_from_database(session_id=session_id)
+    session_info = database_manager.get_session_info_from_database(session_id=session_id)
 
     # the session cookie is not stored in the session database
     # so we simply mark the cookie as expired
@@ -290,7 +290,7 @@ async def check_session_cookie_on_http_request(request: Request, callback) -> Re
                     else None
                     )
 
-            response_session_info = get_session_info_from_database(session_id=response_session_id)
+            response_session_info = database_manager.get_session_info_from_database(session_id=response_session_id)
 
             if response_session_id is not None:
                 set_cookie_enabled = True
@@ -345,25 +345,6 @@ async def session_cleanup_loop():
     while True:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL_MINS * 60)
         await session_cleanup_old()
-
-
-def get_session_info_from_database(user_id: int | None = None, 
-                                   session_id: str | None = None) -> SessionInfo | None:
-    session_info = None
-    if user_id is not None or session_id is not None:
-        with sql_engine.begin() as conn:
-            result = conn.execute(
-                    sqlalchemy.select(session_db_table)
-                    .where(sqlalchemy.or_(
-                        session_db_table.c.user_id == user_id,
-                        session_db_table.c.session_id == session_id
-                        )
-                    )
-                    ).first()
-
-            if result is not None:
-                session_info = SessionInfo(user_id=result.user_id, username=result.username)
-    return session_info
 
 
 
@@ -553,7 +534,7 @@ def index(request: Request, session_id: Annotated[str | None, Cookie()] = None):
     username: str = "Signed out"
 
     if session_id is not None:
-        session_info = get_session_info_from_database(session_id=session_id)
+        session_info = database_manager.get_session_info_from_database(session_id=session_id)
         if session_info is not None:
             username = session_info.username
 

@@ -15,7 +15,6 @@ dependencies = [
   "asyncpg",
   "bcrypt",
   "pytest",
-  "celery"
 ]
 authors = [
   {name = "Daniel Chu", email = "chudaniel400@gmail.com"}
