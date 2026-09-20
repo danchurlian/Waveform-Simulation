@@ -364,7 +364,6 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
             result = f"{login_form.username} is already logged in somewhere else!"
             print(f"storing session cookie failed, {e}")
             create_session_success = False
-
         if create_session_success and session_id is not None:
             database_manager.delete_session_id_from_database(session_id)
 
@@ -440,7 +439,7 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
         # if there is only one frequency, display equation information.
         # if there is a list of frequencies, do not display equation information.
-        plot_image_html = f"<div id='plot-image-load'>{wavegen.get_audio_from_freqs(freqs, data.sig_type)}</div>"
+        plot_image_html = f"<div id='plot-image-load'>{wavegen.get_image_svg_from_freqs(freqs, data.sig_type)}</div>"
         equation_list_html = wavegen.generate_equation_list_html(freqs, data.sig_type)
 
         # final response HTML that is returned
