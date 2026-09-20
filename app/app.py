@@ -311,31 +311,6 @@ def new_session_id() -> str:
     return session_id
 
 
-
-# does not determine if username already exists
-def is_valid_username(username: str) -> bool:
-    if " " in username:
-        return False
-
-    BLACKLISTED_USERNAMES: set = {""}
-    if username in BLACKLISTED_USERNAMES:
-        return False
-
-    return True
-
-
-def is_valid_password(password: str) -> bool:
-    if len(password) == 0:
-        return False
-
-    if " " in password:
-        return False
-
-    return True
-
-
-# TODO: modularize the login function and break it down to smaller functions
-
 @app.post("/login")
 def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
