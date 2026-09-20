@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
 from fastapi.responses import Response, HTMLResponse
@@ -20,7 +19,6 @@ from typing_extensions import Annotated
 from pydantic import BaseModel
 from dataclasses import dataclass
 
-import numpy as np
 
 import matplotlib
 matplotlib.use("Agg")
@@ -432,28 +430,23 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
     # setup error message div and setup result variable
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
-    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
-    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+    error_msg_div: HTMLString = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
+    response: HTMLString = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
 
     freq: int = data.freq_slider
-    # add some error handling to this
+    # TODO: add some error handling to this
     freqs: list[int] = [int(freq) for freq in data.freq_text]
 
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-        # Calculate and sample the signal, generate plots
-        ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = wavegen.get_total_signal_data(freqs, data.sig_type)
-
-        imgtag: str = wavegen.generate_image(ts, ys)
-
         # if there is only one frequency, display equation information.
         # if there is a list of frequencies, do not display equation information.
+        plot_image_html = f"<div id='plot-image-load'>{wavegen.get_audio_from_freqs(freqs, data.sig_type)}</div>"
         equation_list_html = wavegen.generate_equation_list_html(freqs, data.sig_type)
 
         # final response HTML that is returned
         response = f""" 
 <div id='error-message' hx-swap-oob='true'></div> 
-{imgtag}
+{plot_image_html}
 {equation_list_html}
 """ 
     return HTMLResponse(content=response, status_code=200)

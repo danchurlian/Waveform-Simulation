@@ -69,7 +69,7 @@ def get_single_signal_data(freq: int, waveform: str):
     return ts, ys
 
 
-def get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
+def _get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
     final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
     for freq in freq_list:
         __, ys = get_single_signal_data(freq, waveform)
@@ -96,17 +96,20 @@ def _get_audio_base64(ys: np.ndarray) -> str:
 
 
 def get_audio_from_freqs(freqs: list[int], signal_type: str) -> str:
-    ys = get_total_signal_data(freqs, signal_type)
+    ys = _get_total_signal_data(freqs, signal_type)
     return _get_audio_base64(ys)
 
 
 # -----------------------------------------------------------------------------
 
 
-def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
-    print("generating image")
+def get_image_svg_from_freqs(freqs: list[int], signal_type: str):
+    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+    ys: np.ndarray = _get_total_signal_data(freqs, signal_type)
+
     fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
     hs: np.ndarray = np.abs(np.fft.rfft(ys))
+
     # Make 2 subplots, top is the signal plot, bottom is the spectrum plot
     fig, axes = plt.subplots(2)
     axes[0].plot(ts, ys)
@@ -120,16 +123,17 @@ def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
     fig.savefig(string_buf, format="svg")
     plt.close(fig)
 
-    xml_string = string_buf.getvalue()
-    return f"<div id='plot-image-load'>{xml_string}</div>"
+    svg_string = string_buf.getvalue()
+    return svg_string
 
+
+# -----------------------------------------------------------------------------
 
 
 def generate_equation_list_html(freq_list: list[int], signal_type: str) -> str:
     assert signal_type in WAVEFORM_EQS, f"Signal type {signal_type} is not known!"
     assert "eq_og"in WAVEFORM_EQS[signal_type], f"Original equations is not found for {signal_type}!"
     assert "eq_series" in WAVEFORM_EQS[signal_type], f"Fourier series expansion is not found for {signal_type}!"
-
 
     equation_list_html: str = "<ul id='equation-list' hx-swap-oob='true' style='display: none; padding: 1rem 0 0 1rem'>"
 
