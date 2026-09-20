@@ -10,9 +10,7 @@ from sqlalchemy.ext.asyncio import create_async_engine \
         as create_async_sql_engine
 import dotenv
 
-import io
 import os
-import base64
 import secrets
 import json
 import datetime as dt
@@ -23,7 +21,6 @@ from pydantic import BaseModel
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.io import wavfile
 
 import matplotlib
 matplotlib.use("Agg")
@@ -408,15 +405,9 @@ def logout(session_id: Annotated[str | None, Cookie()] = None):
 # -----------------------------------------------------------------------------
 
 
-def get_audio_tag(ys: np.ndarray) -> HTMLString:
-    ys = (32767 * ys).astype('int16')
-    # use scipy to write to an io.BytesIO
-    stream: io.BytesIO = io.BytesIO()
-    wavfile.write(stream, SAMPLING_RATE, ys)
-    # write an audio tag and use the data type attribute and base64 encoding
-    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+def get_audio_tag(freqs: list[int], signal_type: str) -> HTMLString:
+    datastr: str = wavegen.get_audio_from_freqs(freqs, signal_type)
     return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
-
 
 
 @app.post("/audio", response_class=HTMLResponse)
@@ -431,8 +422,9 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
         if freq < 0:
             raise AudioGenerationException(detail=f"The frequency {freq} cannot be negative!")
 
-    ys = wavegen.get_total_signal_data(freqs, waveform=data.sig_type)
-    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
+    return HTMLResponse(
+            content=get_audio_tag(freqs, data.sig_type), 
+            status_code=200)
 
 
 

@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
+
 import io
+import base64
+from scipy.io import wavfile
 
 import latex2mathml.converter
-
 
 matplotlib.use("svg")
 SAMPLING_RATE = 44100
@@ -80,6 +82,26 @@ def get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
 
 
 # -----------------------------------------------------------------------------
+
+
+# maybe make this private in the future
+def _get_audio_base64(ys: np.ndarray) -> str:
+    ys = (32767 * ys).astype('int16')
+    # use scipy to write to an io.BytesIO
+    stream: io.BytesIO = io.BytesIO()
+    wavfile.write(stream, SAMPLING_RATE, ys)
+    # write an audio tag and use the data type attribute and base64 encoding
+    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+    return datastr
+
+
+def get_audio_from_freqs(freqs: list[int], signal_type: str) -> str:
+    ys = get_total_signal_data(freqs, signal_type)
+    return _get_audio_base64(ys)
+
+
+# -----------------------------------------------------------------------------
+
 
 def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
     print("generating image")
