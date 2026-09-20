@@ -4,12 +4,6 @@ from fastapi.responses import Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import sqlalchemy
-from sqlalchemy.ext.asyncio import create_async_engine \
-        as create_async_sql_engine
-import dotenv
-
-import os
 import secrets
 import json
 import datetime as dt
@@ -17,43 +11,10 @@ from http.cookies import CookieError, SimpleCookie
 
 from typing_extensions import Annotated
 from pydantic import BaseModel
-from dataclasses import dataclass
-
-
-import matplotlib
-matplotlib.use("Agg")
-
 
 import app.wavegen as wavegen
 import app.database_manager as database_manager
 from app.database_manager import AccountLoginResult, ProjectInfo, AccountCreateResult
-
-
-
-# load the database
-dotenv.load_dotenv()
-DB_USER: str = os.getenv("POSTGRES_USER")
-DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD")
-DB_HOST: str = os.getenv("POSTGRES_HOST")
-DB_PORT: str = os.getenv("POSTGRES_PORT")
-DB_NAME: str = os.getenv("DB_NAME")
-
-sql_engine = sqlalchemy.create_engine(
-        os.getenv("DATABASE_URL"),
-        poolclass=sqlalchemy.NullPool,
-        )
-
-async_sql_engine = create_async_sql_engine(
-        f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
-        poolclass=sqlalchemy.NullPool,
-        connect_args={"command_timeout": 5}
-        )
-
-sql_metadata = sqlalchemy.MetaData()
-user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
-project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
-session_db_table = sqlalchemy.Table("session", sql_metadata, autoload_with=sql_engine)
-
 
 
 app = FastAPI()
@@ -79,33 +40,9 @@ class LoginForm(BaseModel):
     password: str
     useraction: str
 
-"""
-class ProjectInfo:
-    frequencies: list[int]
-    waveform: str
-    title: str
-    project_id: uuid.UUID
-
-    def __init__(self, frequencies: list[int] = [],
-                 waveform: str = "",
-                 title: str = "Unnamed",
-                 project_id: uuid.UUID = uuid.uuid4()):
-        self.frequencies = frequencies
-        self.waveform = waveform
-        self.title = title
-        self.project_id = project_id
-
-
-    def __str__(self) -> str:
-        return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
-"""        
 
 # -----------------------------------------------------------------------------
 
-@dataclass(frozen=True)
-class SessionInfo:
-    username: str
-    user_id: int
 
 SESSION_INACTIVITY_TIMEOUT = dt.timedelta(minutes = 30)
 SESSION_CLEANUP_INTERVAL_MINS: float = 10 * 1 / 60

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
+matplotlib.use("svg")
 
 import io
 import base64
@@ -8,7 +9,7 @@ from scipy.io import wavfile
 
 import latex2mathml.converter
 
-matplotlib.use("svg")
+
 SAMPLING_RATE = 44100
 
 
