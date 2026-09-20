@@ -14,7 +14,7 @@ dependencies = [
   "psycopg[binary]",
   "asyncpg",
   "bcrypt",
-  "pytest"
+  "pytest",
 ]
 authors = [
   {name = "Daniel Chu", email = "chudaniel400@gmail.com"}
