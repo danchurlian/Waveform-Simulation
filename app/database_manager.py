@@ -179,7 +179,6 @@ def delete_project_from_database(project_id: str) -> bool:
 
 
 def cleanup_old_sessions() -> None: 
-    print('calling inside database_manager module')
     now_time = dt.datetime.now(dt.timezone.utc)
     base_time = now_time - SESSION_INACTIVITY_TIMEOUT
 

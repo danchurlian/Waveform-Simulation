@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
@@ -11,7 +10,6 @@ from sqlalchemy.ext.asyncio import create_async_engine \
         as create_async_sql_engine
 import dotenv
 
-import asyncio
 import io
 import os
 import base64
@@ -62,16 +60,8 @@ project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_e
 session_db_table = sqlalchemy.Table("session", sql_metadata, autoload_with=sql_engine)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    session_cleanup_task = asyncio.create_task(session_cleanup_loop())
 
-    yield
-
-    session_cleanup_task.cancel()
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
@@ -319,32 +309,6 @@ async def check_session_cookie_on_http_request(request: Request, callback) -> Re
 def new_session_id() -> str:
     session_id = secrets.token_hex(8)
     return session_id
-
-
-async def session_cleanup_old() -> None: 
-    now_time = dt.datetime.now(dt.timezone.utc)
-    base_time = now_time - SESSION_INACTIVITY_TIMEOUT
-
-    try:
-        async with async_sql_engine.begin() as conn:
-            result = await conn.execute(
-                    sqlalchemy.delete(session_db_table)
-                    .where(session_db_table.c.last_interacted < base_time)
-                    )
-            if result.rowcount > 0:
-                print("deleted an old session")
-
-    except asyncio.CancelledError as e:
-        print(e)
-       
-
-# must be called by a lifespan function defined by FastAPI
-async def session_cleanup_loop():
-    # we will have to use async version of sqlalchemy
-    print("cleanup loop")
-    while True:
-        await asyncio.sleep(SESSION_CLEANUP_INTERVAL_MINS * 60)
-        await session_cleanup_old()
 
 
 
