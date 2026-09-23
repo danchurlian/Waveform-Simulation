@@ -6,7 +6,6 @@ from fastapi.templating import Jinja2Templates
 
 import secrets
 import json
-import datetime as dt
 from http.cookies import CookieError, SimpleCookie
 
 from typing_extensions import Annotated
@@ -40,12 +39,6 @@ class LoginForm(BaseModel):
     password: str
     useraction: str
 
-
-# -----------------------------------------------------------------------------
-
-
-SESSION_INACTIVITY_TIMEOUT = dt.timedelta(minutes = 30)
-SESSION_CLEANUP_INTERVAL_MINS: float = 10 * 1 / 60
 
 
 # -----------------------------------------------------------------------------
