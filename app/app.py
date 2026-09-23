@@ -20,8 +20,8 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
+
 # constants ----------------------------------------
-SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
 
 type HTMLString = str
@@ -38,7 +38,6 @@ class LoginForm(BaseModel):
     # this is the raw password the user enters
     password: str
     useraction: str
-
 
 
 # -----------------------------------------------------------------------------
