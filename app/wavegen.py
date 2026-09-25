@@ -1,12 +1,15 @@
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
+matplotlib.use("svg")
+
 import io
+import base64
+from scipy.io import wavfile
 
 import latex2mathml.converter
 
 
-matplotlib.use("svg")
 SAMPLING_RATE = 44100
 
 
@@ -35,42 +38,42 @@ WAVEFORM_EQS: dict = {
 # -----------------------------------------------------------------------------
 
 
-def sin_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
+def _sin_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
     return np.sin(2 * np.pi * freq * ts)
 
 
-def sawtooth_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
+def _sawtooth_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
     return 2 * ((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2)
 
 
-def triangle_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
+def _triangle_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
     return 4 * (np.abs((freq * ts - 1/2) - np.floor(freq * ts - 1/2) - 1/2) - 1/4)
 
 
-def square_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
+def _square_wave(ts: np.ndarray, freq: int = 1) -> np.ndarray:
     return np.sign(np.sin(2 * np.pi * freq * ts))
 
 
 JUMP_TABLE: dict = {
-    "Sine Wave": sin_wave,
-    "Triangle Wave": triangle_wave,
-    "Sawtooth Wave": sawtooth_wave,  
-    "Square Wave": square_wave,
+    "Sine Wave": _sin_wave,
+    "Triangle Wave": _triangle_wave,
+    "Sawtooth Wave": _sawtooth_wave,  
+    "Square Wave": _square_wave,
 }
 
 
 # -----------------------------------------------------------------------------
 
-def get_single_signal_data(freq: int, waveform: str):
+def _get_single_signal_data(freq: int, waveform: str):
     ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
     ys: np.ndarray = JUMP_TABLE[waveform](ts, freq=freq)
     return ts, ys
 
 
-def get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
+def _get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
     final_ys: np.ndarray = np.zeros(SAMPLING_RATE * 2)
     for freq in freq_list:
-        __, ys = get_single_signal_data(freq, waveform)
+        __, ys = _get_single_signal_data(freq, waveform)
         final_ys += ys
 
     ys_max = np.max(final_ys)
@@ -81,10 +84,33 @@ def get_total_signal_data(freq_list: list[int], waveform: str) -> np.ndarray:
 
 # -----------------------------------------------------------------------------
 
-def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
-    print("generating image")
+
+# maybe make this private in the future
+def _get_audio_base64(ys: np.ndarray) -> str:
+    ys = (32767 * ys).astype('int16')
+    # use scipy to write to an io.BytesIO
+    stream: io.BytesIO = io.BytesIO()
+    wavfile.write(stream, SAMPLING_RATE, ys)
+    # write an audio tag and use the data type attribute and base64 encoding
+    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+    return datastr
+
+
+def get_audio_from_freqs(freqs: list[int], signal_type: str) -> str:
+    ys = _get_total_signal_data(freqs, signal_type)
+    return _get_audio_base64(ys)
+
+
+# -----------------------------------------------------------------------------
+
+
+def get_image_svg_from_freqs(freqs: list[int], signal_type: str):
+    ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
+    ys: np.ndarray = _get_total_signal_data(freqs, signal_type)
+
     fs: np.ndarray = np.fft.rfftfreq(ys.size, d=1/SAMPLING_RATE)
     hs: np.ndarray = np.abs(np.fft.rfft(ys))
+
     # Make 2 subplots, top is the signal plot, bottom is the spectrum plot
     fig, axes = plt.subplots(2)
     axes[0].plot(ts, ys)
@@ -98,16 +124,17 @@ def generate_image(ts: np.ndarray, ys: np.ndarray) -> str:
     fig.savefig(string_buf, format="svg")
     plt.close(fig)
 
-    xml_string = string_buf.getvalue()
-    return f"<div id='plot-image-load'>{xml_string}</div>"
+    svg_string = string_buf.getvalue()
+    return svg_string
 
+
+# -----------------------------------------------------------------------------
 
 
 def generate_equation_list_html(freq_list: list[int], signal_type: str) -> str:
     assert signal_type in WAVEFORM_EQS, f"Signal type {signal_type} is not known!"
     assert "eq_og"in WAVEFORM_EQS[signal_type], f"Original equations is not found for {signal_type}!"
     assert "eq_series" in WAVEFORM_EQS[signal_type], f"Fourier series expansion is not found for {signal_type}!"
-
 
     equation_list_html: str = "<ul id='equation-list' hx-swap-oob='true' style='display: none; padding: 1rem 0 0 1rem'>"
 

@@ -1,72 +1,27 @@
-
 from fastapi import FastAPI, Form, Cookie
 from fastapi.requests import Request
 from fastapi.responses import Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import sqlalchemy
-from sqlalchemy.ext.asyncio import create_async_engine \
-        as create_async_sql_engine
-import dotenv
-
-import io
-import os
-import base64
 import secrets
 import json
-import datetime as dt
 from http.cookies import CookieError, SimpleCookie
 
 from typing_extensions import Annotated
 from pydantic import BaseModel
-from dataclasses import dataclass
-
-import numpy as np
-from scipy.io import wavfile
-
-import matplotlib
-matplotlib.use("Agg")
-
 
 import app.wavegen as wavegen
 import app.database_manager as database_manager
 from app.database_manager import AccountLoginResult, ProjectInfo, AccountCreateResult
 
 
-
-# load the database
-dotenv.load_dotenv()
-DB_USER: str = os.getenv("POSTGRES_USER")
-DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD")
-DB_HOST: str = os.getenv("POSTGRES_HOST")
-DB_PORT: str = os.getenv("POSTGRES_PORT")
-DB_NAME: str = os.getenv("DB_NAME")
-
-sql_engine = sqlalchemy.create_engine(
-        os.getenv("DATABASE_URL"),
-        poolclass=sqlalchemy.NullPool,
-        )
-
-async_sql_engine = create_async_sql_engine(
-        f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
-        poolclass=sqlalchemy.NullPool,
-        connect_args={"command_timeout": 5}
-        )
-
-sql_metadata = sqlalchemy.MetaData()
-user_db_table = sqlalchemy.Table("user_table", sql_metadata, autoload_with=sql_engine)
-project_db_table = sqlalchemy.Table("project", sql_metadata, autoload_with=sql_engine)
-session_db_table = sqlalchemy.Table("session", sql_metadata, autoload_with=sql_engine)
-
-
-
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
+
 # constants ----------------------------------------
-SAMPLING_RATE: int = 44100
 MAX_FREQUENCY_INPUT: int = 1000
 
 type HTMLString = str
@@ -83,37 +38,6 @@ class LoginForm(BaseModel):
     # this is the raw password the user enters
     password: str
     useraction: str
-
-"""
-class ProjectInfo:
-    frequencies: list[int]
-    waveform: str
-    title: str
-    project_id: uuid.UUID
-
-    def __init__(self, frequencies: list[int] = [],
-                 waveform: str = "",
-                 title: str = "Unnamed",
-                 project_id: uuid.UUID = uuid.uuid4()):
-        self.frequencies = frequencies
-        self.waveform = waveform
-        self.title = title
-        self.project_id = project_id
-
-
-    def __str__(self) -> str:
-        return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
-"""        
-
-# -----------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class SessionInfo:
-    username: str
-    user_id: int
-
-SESSION_INACTIVITY_TIMEOUT = dt.timedelta(minutes = 30)
-SESSION_CLEANUP_INTERVAL_MINS: float = 10 * 1 / 60
 
 
 # -----------------------------------------------------------------------------
@@ -369,7 +293,6 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
             result = f"{login_form.username} is already logged in somewhere else!"
             print(f"storing session cookie failed, {e}")
             create_session_success = False
-
         if create_session_success and session_id is not None:
             database_manager.delete_session_id_from_database(session_id)
 
@@ -408,15 +331,9 @@ def logout(session_id: Annotated[str | None, Cookie()] = None):
 # -----------------------------------------------------------------------------
 
 
-def get_audio_tag(ys: np.ndarray) -> HTMLString:
-    ys = (32767 * ys).astype('int16')
-    # use scipy to write to an io.BytesIO
-    stream: io.BytesIO = io.BytesIO()
-    wavfile.write(stream, SAMPLING_RATE, ys)
-    # write an audio tag and use the data type attribute and base64 encoding
-    datastr: str = base64.b64encode(stream.getbuffer()).decode("ascii")
+def get_audio_tag(freqs: list[int], signal_type: str) -> HTMLString:
+    datastr: str = wavegen.get_audio_from_freqs(freqs, signal_type)
     return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
-
 
 
 @app.post("/audio", response_class=HTMLResponse)
@@ -431,8 +348,9 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
         if freq < 0:
             raise AudioGenerationException(detail=f"The frequency {freq} cannot be negative!")
 
-    ys = wavegen.get_total_signal_data(freqs, waveform=data.sig_type)
-    return HTMLResponse(content=get_audio_tag(ys), status_code=200)
+    return HTMLResponse(
+            content=get_audio_tag(freqs, data.sig_type), 
+            status_code=200)
 
 
 
@@ -440,28 +358,23 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
     # setup error message div and setup result variable
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
-    error_msg_div: str = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
-    response: str = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
+    error_msg_div: HTMLString = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
+    response: HTMLString = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
 
     freq: int = data.freq_slider
-    # add some error handling to this
+    # TODO: add some error handling to this
     freqs: list[int] = [int(freq) for freq in data.freq_text]
 
     if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-        # Calculate and sample the signal, generate plots
-        ts: np.ndarray = np.linspace(0, 2, SAMPLING_RATE * 2)
-        ys: np.ndarray = wavegen.get_total_signal_data(freqs, data.sig_type)
-
-        imgtag: str = wavegen.generate_image(ts, ys)
-
         # if there is only one frequency, display equation information.
         # if there is a list of frequencies, do not display equation information.
+        plot_image_html = f"<div id='plot-image-load'>{wavegen.get_image_svg_from_freqs(freqs, data.sig_type)}</div>"
         equation_list_html = wavegen.generate_equation_list_html(freqs, data.sig_type)
 
         # final response HTML that is returned
         response = f""" 
 <div id='error-message' hx-swap-oob='true'></div> 
-{imgtag}
+{plot_image_html}
 {equation_list_html}
 """ 
     return HTMLResponse(content=response, status_code=200)
