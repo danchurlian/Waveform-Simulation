@@ -167,7 +167,7 @@
 
                         <!-- Form -->
                         <form   id="signal-form"
-                                hx-post="/image" 
+                                hx-post="/api/signals/graphs" 
                                 hx-target="#plot-image-load" 
                                 hx-swap="outerHTML"
                                 hx-trigger="
@@ -226,7 +226,7 @@
                         <div id="listen-container">
                             <button id="listen-button" 
                                 form="signal-form"
-                                hx-post="/audio"
+                                hx-post="/api/signals/audio"
                                 hx-target="#audio-output"
                                 hx-target-400="#audio-output"
                                 hx-swap="outerHTML"

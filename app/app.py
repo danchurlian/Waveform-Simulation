@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Form, Cookie
+from fastapi import FastAPI, APIRouter, Form, Cookie
 from fastapi.requests import Request
 from fastapi.responses import Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +19,14 @@ from app.database_manager import AccountLoginResult, ProjectInfo, AccountCreateR
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
+
+
+
+signal_router = APIRouter()
+app.include_router(signal_router, prefix="/api/signals")
+
+project_router = APIRouter()
+app.include_router(project_router, prefix="/api/projects")
 
 
 # constants ----------------------------------------
@@ -336,7 +344,8 @@ def get_audio_tag(freqs: list[int], signal_type: str) -> HTMLString:
     return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
 
 
-@app.post("/audio", response_class=HTMLResponse)
+
+@signal_router.post("/audio", response_class=HTMLResponse)
 def new_audio_main(data: Annotated[FrequencyForm, Form()]):
     try:
         freqs: list[int] = [int(freq) for freq in data.freq_text]
@@ -354,7 +363,7 @@ def new_audio_main(data: Annotated[FrequencyForm, Form()]):
 
 
 
-@app.post("/image", response_class=HTMLResponse)
+@signal_router.post("/graphs", response_class=HTMLResponse)
 def new_image_main(data: Annotated[FrequencyForm, Form()]):
     # setup error message div and setup result variable
     error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
