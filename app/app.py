@@ -58,13 +58,15 @@ class AudioGenerationException(Exception):
         super().__init__(detail)
         pass
 
+
+
 @app.exception_handler(AudioGenerationException)
 async def audio_exception_handler(_request, exc):
     return HTMLResponse(content=f"<div id='audio-output'>{exc.detail}</div>", status_code=400) 
 
 
-# -----------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
 
 
 
@@ -117,8 +119,7 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
 
 
 
-
-@app.post("/save", response_class=HTMLResponse)
+@project_router.post("/", response_class=HTMLResponse)
 def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     freq_list: list[int] = []
     try:
@@ -143,7 +144,6 @@ def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | 
 
 
 
-
 @project_router.delete("/{project_id}")
 def delete_project(project_id: str) -> HTMLResponse:
     delete_success = database_manager.delete_project_from_database(project_id)
@@ -153,8 +153,8 @@ def delete_project(project_id: str) -> HTMLResponse:
 
 
 
-
 # -----------------------------------------------------------------------------
+
 
 
 @app.middleware("http")
@@ -245,9 +245,11 @@ async def check_session_cookie_on_http_request(request: Request, callback) -> Re
     return response
 
 
+
 def new_session_id() -> str:
     session_id = secrets.token_hex(8)
     return session_id
+
 
 
 @app.post("/login")
@@ -343,7 +345,9 @@ def logout(session_id: Annotated[str | None, Cookie()] = None):
     return response
 
 
+
 # -----------------------------------------------------------------------------
+
 
 
 def get_audio_tag(freqs: list[int], signal_type: str) -> HTMLString:
@@ -395,6 +399,7 @@ def new_image_main(data: Annotated[FrequencyForm, Form()]):
 """ 
     return HTMLResponse(content=response, status_code=200)
     
+
 
 @app.get("/")
 def index(request: Request, session_id: Annotated[str | None, Cookie()] = None):
