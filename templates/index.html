@@ -136,7 +136,7 @@
                 <div id="login-nav-container">
                     <div id="user-label">{{ username }}</div>
                     <button commandfor="login-dialog" command="show-modal">Login</button>
-                    <button hx-get="/logout" hx-target="#logout-message">Logout</button>
+                    <button hx-get="/api/users/logout" hx-target="#logout-message">Logout</button>
                 </div>
             </header>
             <main>
@@ -258,7 +258,7 @@
                     <button commandfor="login-dialog" command="close">Close</button>
                     <h1>Login </h1>
                     <form id="login-form" 
-                        hx-post="login"
+                        hx-post="/api/users/login"
                         hx-target="#login-result">
 
                         <div class="login-field-container">

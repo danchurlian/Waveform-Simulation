@@ -21,12 +21,14 @@ app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
 
-
 signal_router = APIRouter()
 app.include_router(signal_router, prefix="/api/signals")
 
 project_router = APIRouter()
 app.include_router(project_router, prefix="/api/projects")
+
+user_router = APIRouter()
+app.include_router(user_router, prefix="/api/users")
 
 
 # constants ----------------------------------------
@@ -252,8 +254,9 @@ def new_session_id() -> str:
 
 
 
-@app.post("/login")
-def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
+@user_router.post("/login")
+def on_login(login_form: Annotated[LoginForm, Form()], 
+             session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     result: str = "Login failed."
 
     login_success: bool = False
@@ -333,7 +336,7 @@ def on_login(login_form: Annotated[LoginForm, Form()], session_id: Annotated[str
 
 
 
-@app.get("/logout")
+@user_router.get("/logout")
 def logout(session_id: Annotated[str | None, Cookie()] = None):
     if session_id is not None:
         delete_success = database_manager.delete_session_id_from_database(session_id=session_id)
