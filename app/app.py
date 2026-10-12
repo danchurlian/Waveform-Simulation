@@ -66,28 +66,6 @@ async def audio_exception_handler(_request, exc):
 # -----------------------------------------------------------------------------
 
 
-@app.post("/save", response_class=HTMLResponse)
-def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
-    freq_list: list[int] = []
-    try:
-        freq_list = [int(freq_str) for freq_str in form.freq_text]
-    except ValueError:
-        return HTMLResponse(content="Frequencies must be integers!", status_code=200)
-
-    session_info = database_manager.get_session_info_from_database(session_id=session_id)
-    user_id: int | None = session_info.user_id if session_info is not None else None
-    if user_id is None:
-        return HTMLResponse(content="Please login to save.", status_code=200)
-
-    project_info = ProjectInfo(frequencies=freq_list, 
-                               waveform=form.sig_type, 
-                               title=form.title)
-
-    save_success: bool = database_manager.save_project_info_to_database(user_id, project_info)
-    if not save_success:
-        return HTMLResponse(content="Save failed!", status_code=200)
-    
-    return HTMLResponse(content="Saved!", status_code=200)
 
 
 def load_project_info(project_info: ProjectInfo) -> HTMLString:
@@ -110,7 +88,7 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
         </button>
 
         <button class="project-list-item-delete"
-            hx-delete="/projects/{project_info.project_id}"
+            hx-delete="/api/projects/{project_info.project_id}"
             hx-target="closest .project-list-item"
             hx-swap="outerHTML"
         >Delete</button>
@@ -139,12 +117,41 @@ def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTML
 
 
 
-@app.delete("/projects/{project_id}")
+
+@app.post("/save", response_class=HTMLResponse)
+def on_save(form: Annotated[FrequencyForm, Form()], session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
+    freq_list: list[int] = []
+    try:
+        freq_list = [int(freq_str) for freq_str in form.freq_text]
+    except ValueError:
+        return HTMLResponse(content="Frequencies must be integers!", status_code=200)
+
+    session_info = database_manager.get_session_info_from_database(session_id=session_id)
+    user_id: int | None = session_info.user_id if session_info is not None else None
+    if user_id is None:
+        return HTMLResponse(content="Please login to save.", status_code=200)
+
+    project_info = ProjectInfo(frequencies=freq_list, 
+                               waveform=form.sig_type, 
+                               title=form.title)
+
+    save_success: bool = database_manager.save_project_info_to_database(user_id, project_info)
+    if not save_success:
+        return HTMLResponse(content="Save failed!", status_code=200)
+    
+    return HTMLResponse(content="Saved!", status_code=200)
+
+
+
+
+@project_router.delete("/{project_id}")
 def delete_project(project_id: str) -> HTMLResponse:
     delete_success = database_manager.delete_project_from_database(project_id)
 
     return HTMLResponse(content="", status_code=200) if delete_success \
             else HTMLResponse(content="delete failed", status_code=404)
+
+
 
 
 # -----------------------------------------------------------------------------
