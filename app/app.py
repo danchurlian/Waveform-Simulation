@@ -101,7 +101,7 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 
 
 
-@app.get("/projects", response_class=HTMLResponse)
+@project_router.get("/", response_class=HTMLResponse)
 def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     if session_id is None:
         return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
