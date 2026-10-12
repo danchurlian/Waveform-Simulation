@@ -104,7 +104,9 @@ def load_project_info(project_info: ProjectInfo) -> HTMLString:
 @project_router.get("/", response_class=HTMLResponse)
 def get_project_list(session_id: Annotated[str | None, Cookie()] = None) -> HTMLResponse:
     if session_id is None:
-        return HTMLResponse(content="To load your previously saved projects, please <strong>login.</strong>", status_code=200)
+        return HTMLResponse(
+                content="To load your previously saved projects, please <strong>login.</strong>", 
+                status_code=200)
 
     session_info = database_manager.get_session_info_from_database(session_id=session_id)
     user_id = session_info.user_id if session_info is not None else None
@@ -308,7 +310,11 @@ def on_login(login_form: Annotated[LoginForm, Form()],
         the_new_session_id = new_session_id()
 
         try:
-            database_manager.store_session_id_to_database(session_id=the_new_session_id, user_id=user_id, username=login_form.username)
+            database_manager.store_session_id_to_database(
+                    session_id=the_new_session_id, 
+                    user_id=user_id, 
+                    username=login_form.username)
+
         except Exception as e:
             result = f"{login_form.username} is already logged in somewhere else!"
             print(f"storing session cookie failed, {e}")
