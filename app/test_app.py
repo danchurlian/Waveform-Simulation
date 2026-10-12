@@ -5,7 +5,7 @@ from .app import app
 client = TestClient(app)
 
 def test_audio():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": ["100", "400"], 
         "freq_slider": 100, 
         "sig_type": "Sine Wave",
@@ -15,7 +15,7 @@ def test_audio():
 
 
 def test_audio_nan_ints():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": ["asdb", "400"], 
         "freq_slider": 100, 
         "sig_type": "Sine Wave",
@@ -25,7 +25,7 @@ def test_audio_nan_ints():
 
 
 def test_audio_negative_freq():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": ["400", "-200"], 
         "freq_slider": 200, 
         "sig_type": "Sine Wave",
@@ -35,7 +35,7 @@ def test_audio_negative_freq():
 
 
 def test_audio_negative_freq_2():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": ["-200", "400"], 
         "freq_slider": 200, 
         "sig_type": "Sine Wave",
@@ -45,7 +45,7 @@ def test_audio_negative_freq_2():
 
 
 def test_audio_nan_ints_2():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": ["soefijsoiefjoseijfasdb"], 
         "freq_slider": 20, 
         "sig_type": "Sine Wave",
@@ -55,7 +55,7 @@ def test_audio_nan_ints_2():
 
 
 def test_audio_no_freqs():
-    response = client.post("/audio", data={
+    response = client.post("/api/signals/audio", data={
         "freq_text": [], 
         "freq_slider": 200, 
         "sig_type": "Sine Wave",
@@ -65,13 +65,13 @@ def test_audio_no_freqs():
 
 
 def test_invalid_save():
-    response = client.delete("/projects/00000000-0000-0000-0000-000000000000")
+    response = client.delete("/api/projects/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404
 
 
 
 def test_login_logout():
-    response = client.post("/login", data={
+    response = client.post("/api/users/login", data={
         "username": "dchu400",
         "password": "1234",
         "useraction": "login"
@@ -82,13 +82,13 @@ def test_login_logout():
     session_id: str = response.cookies.get("session_id")
     assert session_id is not None
 
-    response = client.get("/logout", cookies={
+    response = client.get("/api/users/logout", cookies={
         "session_id": session_id})
     assert response.status_code == 200
 
 
 def test_login_invalid_password():
-    response = client.post("/login", data={
+    response = client.post("/api/users/login", data={
             "username": "dchu400",
             "password": "1234j",
             "useraction": "login",
@@ -98,7 +98,7 @@ def test_login_invalid_password():
 
 
 def test_create_blank_username():
-    response = client.post("/login", data={
+    response = client.post("/api/users/login", data={
             "username": "",
             "password": "1234",
             "useraction": "create",
@@ -108,7 +108,7 @@ def test_create_blank_username():
 
 
 def test_create_blank_password():
-    response = client.post("/login", data={
+    response = client.post("/api/users/login", data={
             "username": "testuser",
             "password": "",
             "useraction": "create",
@@ -118,7 +118,7 @@ def test_create_blank_password():
 
 
 def test_login_from_2_clients():
-    response1 = client.post("/login", data={
+    response1 = client.post("/api/users/login", data={
         "username": "dchu400",
         "password": "1234",
         "useraction": "login",
@@ -127,7 +127,7 @@ def test_login_from_2_clients():
     session_id: str = response1.cookies.get("session_id")
     assert session_id is not None 
 
-    response2 = client.post("/login", data={
+    response2 = client.post("/api/users/login", data={
         "username": "dchu400",
         "password": "1234",
         "useraction": "login",
@@ -135,7 +135,7 @@ def test_login_from_2_clients():
     assert response2.status_code == 200
     assert "already logged in " in response2.text
 
-    logout_response = client.get("/logout", cookies={
+    logout_response = client.get("/api/users/logout", cookies={
         "session_id": session_id})
 
     assert logout_response.status_code == 200
