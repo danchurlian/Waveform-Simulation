@@ -11,17 +11,18 @@ from http.cookies import CookieError, SimpleCookie
 from typing_extensions import Annotated
 from pydantic import BaseModel
 
-import app.wavegen as wavegen
 import app.database_manager as database_manager
 from app.database_manager import AccountLoginResult, ProjectInfo, AccountCreateResult
 
+
+from app.api.endpoints.signals import signal_router
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory="templates")
 
 
-signal_router = APIRouter()
+# routing
 app.include_router(signal_router, prefix="/api/signals")
 
 project_router = APIRouter()
@@ -32,8 +33,6 @@ app.include_router(user_router, prefix="/api/users")
 
 
 # constants ----------------------------------------
-MAX_FREQUENCY_INPUT: int = 1000
-
 type HTMLString = str
 
 class FrequencyForm(BaseModel):
@@ -48,23 +47,6 @@ class LoginForm(BaseModel):
     # this is the raw password the user enters
     password: str
     useraction: str
-
-
-# -----------------------------------------------------------------------------
-
-# Audio generation exception when clicking the listen button with
-# invalid data
-class AudioGenerationException(Exception):
-    def __init__(self, detail: str):
-        self.detail = detail
-        super().__init__(detail)
-        pass
-
-
-
-@app.exception_handler(AudioGenerationException)
-async def audio_exception_handler(_request, exc):
-    return HTMLResponse(content=f"<div id='audio-output'>{exc.detail}</div>", status_code=400) 
 
 
 
@@ -357,57 +339,6 @@ def logout(session_id: Annotated[str | None, Cookie()] = None):
 
 # -----------------------------------------------------------------------------
 
-
-
-def get_audio_tag(freqs: list[int], signal_type: str) -> HTMLString:
-    datastr: str = wavegen.get_audio_from_freqs(freqs, signal_type)
-    return f"<audio id='audio-output' controls type='audio/wav' src='data:audio/wav;base64,{datastr}' />"
-
-
-
-@signal_router.post("/audio", response_class=HTMLResponse)
-def new_audio_main(data: Annotated[FrequencyForm, Form()]):
-    try:
-        freqs: list[int] = [int(freq) for freq in data.freq_text]
-    except ValueError:
-        raise AudioGenerationException(detail="One of the frequencies is not an integer!")
-
-    # Check for negative numbers
-    for freq in freqs:
-        if freq < 0:
-            raise AudioGenerationException(detail=f"The frequency {freq} cannot be negative!")
-
-    return HTMLResponse(
-            content=get_audio_tag(freqs, data.sig_type), 
-            status_code=200)
-
-
-
-@signal_router.post("/graphs", response_class=HTMLResponse)
-def new_image_main(data: Annotated[FrequencyForm, Form()]):
-    # setup error message div and setup result variable
-    error_msg: str = f"Frequency must be <= {MAX_FREQUENCY_INPUT}!"
-    error_msg_div: HTMLString = f"<div id='error-message' hx-swap-oob='true'>{error_msg}</div>"
-    response: HTMLString = error_msg_div + "\n<img id='plot-image-load' style='display: none' src='data:image/png;base64,'/>"
-
-    freq: int = data.freq_slider
-    # TODO: add some error handling to this
-    freqs: list[int] = [int(freq) for freq in data.freq_text]
-
-    if freq is not None and abs(freq) <= MAX_FREQUENCY_INPUT:
-        # if there is only one frequency, display equation information.
-        # if there is a list of frequencies, do not display equation information.
-        plot_image_html = f"<div id='plot-image-load'>{wavegen.get_image_svg_from_freqs(freqs, data.sig_type)}</div>"
-        equation_list_html = wavegen.generate_equation_list_html(freqs, data.sig_type)
-
-        # final response HTML that is returned
-        response = f""" 
-<div id='error-message' hx-swap-oob='true'></div> 
-{plot_image_html}
-{equation_list_html}
-""" 
-    return HTMLResponse(content=response, status_code=200)
-    
 
 
 @app.get("/")
