@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import json
 
 
+# TODO: find a better way to share FrequencyForm
 class FrequencyForm(BaseModel):
     freq_text: list[str]
     freq_slider: int
