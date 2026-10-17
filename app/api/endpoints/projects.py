@@ -1,25 +1,15 @@
 from fastapi import APIRouter, Cookie, Form
 from fastapi.responses import HTMLResponse
 
+from app.models import FrequencyForm, HTMLString
+
 import app.database_manager as database_manager
 from app.database_manager import ProjectInfo
 
 from typing_extensions import Annotated
-from pydantic import BaseModel
 import json
 
-
-# TODO: find a better way to share FrequencyForm
-class FrequencyForm(BaseModel):
-    freq_text: list[str]
-    freq_slider: int
-    sig_type: str
-    title: str
-
-
 project_router = APIRouter()
-# TOOD: find a better way to share global user-defined type statements into something else
-type HTMLString = str
 
 
 # -----------------------------------------------------------------------------

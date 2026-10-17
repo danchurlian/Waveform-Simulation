@@ -2,25 +2,12 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse
 
 from typing_extensions import Annotated
+
+from app.models import FrequencyForm, HTMLString
 import app.wavegen as wavegen
-
-from pydantic import BaseModel
-
-
-# ------------------------------------------------------------------------------
 
 
 signal_router = APIRouter()
-type HTMLString = str
-
-
-class FrequencyForm(BaseModel):
-    freq_text: list[str]
-    freq_slider: int
-    sig_type: str
-    title: str
-
-
 MAX_FREQUENCY_INPUT: int = 1000
 
 
