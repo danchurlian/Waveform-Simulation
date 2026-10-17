@@ -1,21 +1,14 @@
 from fastapi import APIRouter, Form, Cookie
 from fastapi.responses import HTMLResponse
 
+from app.models import LoginForm, HTMLString
+
 import app.database_manager as database_manager
 from app.database_manager import AccountCreateResult, AccountLoginResult
 
 import secrets
 
 from typing_extensions import Annotated
-from pydantic import BaseModel
-
-type HTMLString = str
-class LoginForm(BaseModel):
-    username: str
-    # this is the raw password the user enters
-    password: str
-    useraction: str
-
 
 user_router = APIRouter()
 
