@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Form, Cookie
 from fastapi.responses import HTMLResponse
 
-from app.models import LoginForm, HTMLString
+from app.models import LoginForm, HTMLString, LoginUserAction
 
 import app.database_manager as database_manager
 from app.database_manager import AccountCreateResult, AccountLoginResult
@@ -36,7 +36,7 @@ def on_login(login_form: Annotated[LoginForm, Form()],
 
     user_id: int | None = None
 
-    if login_form.useraction == "create":
+    if login_form.useraction == LoginUserAction.CREATE:
         create_result, new_user_id = database_manager.create_account(login_form.username, login_form.password)
 
         # generate result message and do actions based on create account result
