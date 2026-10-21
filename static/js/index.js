@@ -2,8 +2,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const finalImageTag = document.getElementById("plot-image");
   const graphDataDiv = document.getElementById("graph-data");
-  const form = document.querySelector("form");
+  const form = document.getElementById("signal-form");
 
+  // logic loading the graph pictures from the server
   form.addEventListener("htmx:afterRequest", () => {
     const loadImageTag = document.getElementById("plot-image-load");
     if (loadImageTag) {
@@ -11,11 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+
+  // add logic for showing "save successful" message before going away
   const saveResultDiv = document.getElementById("save-result");
   const SAVE_DISPLAY_TIME_MS = 1500;
   let saveResultDebounce = false;
   saveResultDiv.addEventListener("htmx:afterSettle", () => {
-
     if (!saveResultDebounce) {
       saveResultDebounce = true;
       setTimeout(() => {
@@ -27,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// fired when the user clicks on "add wave", generates a new waveform slider input
 const addWave = (form, frequency) => {
   const parser = new DOMParser();
   const newTextField = `<input 
@@ -63,7 +66,8 @@ const addWave = (form, frequency) => {
   deleteButton.textContent = "Delete";
   deleteButton.type = "button";
 
-  // when you click on the delete button, remove that specific button from the array
+  // when you click on the delete button, 
+  // remove that specific button from the array
   deleteButton.addEventListener("click", (event) => {
     const currentItem = event.target.parentElement;
     currentItem.remove();
@@ -80,6 +84,7 @@ const addWave = (form, frequency) => {
   form.appendChild(waveFormObj);
 }
 
+// when clicking on the "add wave button", fire the event
 document.getElementById("add-wave-button").addEventListener("click", (event) => {
   addWave(document.getElementById("signal-form"), 440);
 })
@@ -88,6 +93,8 @@ document.getElementById("add-wave-button").addEventListener("click", (event) => 
 // ----------------------------------------------------------------------------
 
 
+// fires when the user wants to load the project
+// loads up all the waveforms and the name, the genreal procedure
 const loadProject = (target) => {
   const freqList = JSON.parse(target.dataset.freqs);
   const titleStr = target.dataset.title;
@@ -98,13 +105,14 @@ const loadProject = (target) => {
   const listenButton = document.getElementById("listen-button");
   const titleInput = document.getElementById("project-name-input")
 
-  // delete the old extra waveform items
+  // delete the old extra waveform items from the previous project
   waveformItems = document.querySelectorAll(".wave-form-item");
   waveformItems.forEach((item) => {
     if (item.id != "wave-form-item")
       item.remove();
   })
 
+  // add the new waveform inputs that correspond to the new loading project
   for (let i = 0; i < freqList.length; i++) {
     const freq = freqList[i];
     if (i == 0) {
@@ -118,8 +126,12 @@ const loadProject = (target) => {
     }
   }
 
+  // update workspace to new project matadata, such as the signal type 
+  // and the project title
   waveformSelect.value = waveformStr;
   titleInput.value = titleStr;
+
+  // submit to the server to run the simulation instantly
   form.dispatchEvent(new Event('projectLoad'));
   listenButton.dispatchEvent(new Event('projectLoad'));
 }
