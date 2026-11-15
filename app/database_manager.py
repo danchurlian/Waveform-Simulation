@@ -45,13 +45,15 @@ class ProjectInfo:
         self.project_id = project_id
 
 
+    def __str__(self) -> str:
+        return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
+
+
 @dataclass(frozen=True)
 class SessionInfo:
     username: str
     user_id: int
 
-    def __str__(self) -> str:
-        return f"<ProjectInfo '{self.title}' {self.waveform} {self.frequencies}>"
 
 
 class AccountCreateResult(Enum):
