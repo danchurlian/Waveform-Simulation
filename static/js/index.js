@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("htmx:afterRequest", () => {
     const loadImageTag = document.getElementById("plot-image-load");
     if (loadImageTag) {
-      finalImageTag.appendChild(loadImageTag.closeNode(true));
+      finalImageTag.appendChild(loadImageTag);
     }
   });
 
